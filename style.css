@@ -115,6 +115,64 @@ input[type="text"] {
     display: inline-block;
 }
 
+/* Configuraciones */
+#Config_Menu label {
+    display: block;
+    margin-top: 15px;
+    font-size: 16px;
+    text-align: left;
+    width: 100%;
+    color: #ffffff;
+    text-shadow: 0 0 3px #00ff88;
+}
+
+#Config_Menu input[type="number"],
+#Config_Menu input[type="range"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+#Config_Menu input[type="range"] {
+    cursor: pointer;
+}
+
+#Config_Menu p {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #00ffcc;
+    font-size: 14px;
+    text-shadow: 0 0 2px #00ff88;
+}
+
+#Config_Menu button {
+    display: block;
+    width: 60%;
+    margin-top: 15px;
+}
+
+#Config_Menu h3 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    text-shadow: 0 0 6px #00ff88;
+}
+
+#infiniteRoundsBtn {
+    width: 60%;
+    max-width: 250px;
+    margin: 15px auto 5px auto; /* top right bottom left */
+    display: block;
+    font-size: 16px;
+    padding: 8px 16px;
+}
+
+
 
 /*#Game_Answer {
   display: none;

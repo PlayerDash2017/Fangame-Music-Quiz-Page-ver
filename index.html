@@ -22,7 +22,19 @@
         <button id="btnManualMode" onclick="">Manual Mode</button>
 
         <div id="Config_Menu">
-            <button id="btnConfig" onclick="">Questions Numbers</button>
+            <h3>Settings</h3>
+
+            <!-- Número de Rondas -->
+            <label for="roundsInput">Number of Questions:</label>
+            <input type="number" id="roundsInput" min="1" value="20">
+
+            <!-- Botón Rondas Infinitas -->
+            <button id="infiniteRoundsBtn">Infinite Question</button>
+            <p id="infiniteRoundsStatus">Limited</p>
+
+            <!-- Temporizador -->
+            <label for="timerRange">Timer: <span id="timerValue">50</span>s</label>
+            <input type="range" id="timerRange" min="20" max="60" value="50">
         </div>
     </div>
 

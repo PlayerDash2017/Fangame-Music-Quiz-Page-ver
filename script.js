@@ -66,8 +66,9 @@ inputExcel.addEventListener("change", (event) => {
   reader.readAsArrayBuffer(file);
 });
 
-let totalQuestions = 20;
-let timePerQuestion = 50.0; // segundos
+let totalQuestions, timePerQuestion;
+//let totalQuestions = 20;
+//let timePerQuestion = 50.0; // segundos
 let currentQuestionIndex = 0;
 let currentTimer;
 let timeLeft = timePerQuestion;
@@ -75,13 +76,20 @@ let timeLeft = timePerQuestion;
 // Cargar preguntas aleatorias desde quizData
 function prepareQuestions() {
   const shuffled = [...quizData].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, totalQuestions);
+  return gameConfig.infiniteRounds ? shuffled : shuffled.slice(0, totalQuestions);
+
+  //return shuffled.slice(0, totalQuestions);
 }
 
 // Iniciar el modo de opciones
 function startOptionMode() {
+    //questionList = prepareQuestions();
+    //currentQuestionIndex = 0;
+    totalQuestions = gameConfig.infiniteRounds ? Infinity : gameConfig.rounds;
+    timePerQuestion = gameConfig.timer;
     questionList = prepareQuestions();
     currentQuestionIndex = 0;
+    
     playSound('Select.wav');
     stopMusic();
     showScreen("Screen_InGame");
@@ -328,7 +336,7 @@ document.getElementById("btnBackMenu").onclick = () => {
 };
 
 document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
-    playSound('Click.wav');
+    playSound('Click.wav',0.2);
 });
 
 // Agregar evento al pasar el mouse
@@ -336,8 +344,9 @@ document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
     playSound('Click');
 });*/
 
-function playSound(fileName) {
+function playSound(fileName, fileVolume=1.0) {
     const audio = new Audio('snd/' + fileName);
+    audio.volume = fileVolume;
     audio.play().catch(error => {
         console.error("Error al reproducir el sonido:", error);
     });
@@ -358,3 +367,50 @@ function stopMusic() {
     musMenu.pause();
     musMenu.currentTime = 0; // Reiniciar desde el principio si la quieres volver a tocar luego
 }
+
+// Estado de configuración
+const gameConfig = {
+  rounds: 20,
+  infiniteRounds: false,
+  timer: 50,
+  blockInvalidVideos: false
+};
+
+// Evento para número de rondas
+document.getElementById('roundsInput').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value);
+  gameConfig.rounds = Math.max(1, val || 1);
+});
+
+// Botón de rondas infinitas
+document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
+    gameConfig.infiniteRounds = !gameConfig.infiniteRounds;
+
+    const input = document.getElementById('roundsInput');
+    const status = document.getElementById('infiniteRoundsStatus');
+
+    if (gameConfig.infiniteRounds) {
+        input.disabled = true;
+        status.textContent = "Infinite";
+    } else {
+        input.disabled = false;
+        status.textContent = "Limited";
+    }
+});
+
+// Slider de temporizador
+document.getElementById('timerRange').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value);
+  gameConfig.timer = val;
+  document.getElementById('timerValue').textContent = val;
+});
+
+// Botón para bloquear videos inválidos
+document.getElementById('blockInvalidVideosBtn').addEventListener('click', () => {
+  gameConfig.blockInvalidVideos = !gameConfig.blockInvalidVideos;
+  
+  const status = document.getElementById('blockInvalidVideosStatus');
+  status.textContent = gameConfig.blockInvalidVideos ? 
+    "Estado: Bloqueando inválidos" : 
+    "Estado: Permitir todos";
+});
