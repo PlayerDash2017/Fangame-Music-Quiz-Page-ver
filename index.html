@@ -19,7 +19,7 @@
         <img id="Title" src="./img/title.png" alt="title"/>
 
         <button id="btnOptionMode" onclick="startOptionMode()">Option Mode</button>
-        <button id="btnManualMode" onclick="">Manual Mode</button>
+        <button id="btnManualMode" onclick="startManualMode()">Manual Mode</button>
 
         <div id="Config_Menu">
             <h3>Settings</h3>
@@ -55,7 +55,7 @@
             <h3>Answer</h3>
             <input type="text" id="GameManual_Answer" placeholder="" list="GameManual_List"/>
             <div id="GameManual_Suggestion" class="GameManual_Suggestion"></div>
-            <button onclick="">Summit</button>
+            <button onclick="checkAnswer()">Submit</button>
         </div>
 
         <div id="Game_Answer" style="display: none;">

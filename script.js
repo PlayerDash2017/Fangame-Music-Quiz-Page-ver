@@ -81,15 +81,32 @@ function prepareQuestions() {
   //return shuffled.slice(0, totalQuestions);
 }
 
+let modeGame = "Option"; // "Option" o "Manual"
+
 // Iniciar el modo de opciones
 function startOptionMode() {
     //questionList = prepareQuestions();
     //currentQuestionIndex = 0;
+    modeGame = "Option";
     totalQuestions = gameConfig.infiniteRounds ? Infinity : gameConfig.rounds;
     timePerQuestion = gameConfig.timer;
     questionList = prepareQuestions();
     currentQuestionIndex = 0;
     
+    playSound('Select.wav');
+    stopMusic();
+    showScreen("Screen_InGame");
+    showQuestion();
+}
+
+// Iniciar modo manual
+function startManualMode() {
+    modeGame = "Manual";
+    totalQuestions = gameConfig.infiniteRounds ? Infinity : gameConfig.rounds;
+    timePerQuestion = gameConfig.timer;
+    questionList = prepareQuestions();
+    currentQuestionIndex = 0;
+
     playSound('Select.wav');
     stopMusic();
     showScreen("Screen_InGame");
@@ -114,13 +131,27 @@ function showQuestion() {
     const videoUrl = extractYoutubeEmbed(q.youtube);
     document.getElementById("Video_iframe").src = videoUrl;
 
-    // Mostrar opciones
-    const optionList = document.getElementById("GameOption_List");
-    optionList.style.display = "flex"; // o "block" según tu CSS
-    
-    // Generar opciones
-    const options = generateOptions(q.fangames);
-    renderOptions(options, q.fangames);
+    if (modeGame === "Option") {
+        // Mostrar opciones
+        const optionList = document.getElementById("GameOption_List");
+        optionList.style.display = "flex";
+
+        // Generar opciones
+        const options = generateOptions(q.fangames);
+        renderOptions(options, q.fangames);
+
+        // Ocultar manual
+        document.getElementById("Game_Manual").style.display = "none";
+    } else {
+        // Mostrar input manual
+        const manualDiv = document.getElementById("Game_Manual");
+        manualDiv.style.display = "block";
+        document.getElementById("GameManual_Answer").value = "";
+        document.getElementById("GameManual_Answer").focus();
+
+        // Ocultar opciones
+        document.getElementById("Game_Option").style.display = "none";
+    }
 }
 
 // Actualizar el temporizador
@@ -167,6 +198,9 @@ function handleTimeUp() {
     const optionList = document.getElementById("Game_Option");
     optionList.style.display = "none";
 
+    const manualList = document.getElementById("Game_Manual");
+    manualList.style.display = "none";
+
     // Scroll al div de respuesta
     answerDiv.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -200,24 +234,39 @@ function renderOptions(options, correctAnswer) {
 }
 
 // Revisar respuesta
-function checkAnswer(selected, correctFangames) {
+function checkAnswer(selected = null, correctFangames = null) {
     clearInterval(currentTimer);
     
     const q = questionList[currentQuestionIndex];
+    print(q);
+    //const isCorrect = correctFangames.includes(selected); // ✅ acepta cualquiera de los posibles
 
-    const isCorrect = correctFangames.includes(selected); // ✅ acepta cualquiera de los posibles
+    let isCorrect = false;
+    let userAnswer = selected;
+    if (modeGame === "Option") {
+        // ✅ Validación por opciones (ya estaba)
+        isCorrect = correctFangames.includes(selected);
+    } else {
+        // ✅ Modo manual
+        selected = document.getElementById("GameManual_Answer").value.trim();
+        userAnswer = document.getElementById("GameManual_Answer").value.trim();
+        isCorrect = q.fangames.some(f => f.toLowerCase() === userAnswer.toLowerCase());
+    }
 
     // Guardar resultado
     results.push({
         question: q.music,
-        fangameCorrect: correctFangames.join("; "),
+        fangameCorrect: q.fangames.join("; "),//correctFangames.join("; "),
         selectedAnswer: selected,
         isCorrect: isCorrect
     });
 
-    // Ocultar las opciones
-    const optionList = document.getElementById("Game_Option");
-    optionList.style.display = "none";
+    // Ocultar input/manual o lista de opciones
+    if (modeGame === "Option") {
+        document.getElementById("Game_Option").style.display = "none";
+    } else {
+        document.getElementById("Game_Manual").style.display = "none";
+    }
 
     // Mostrar div de respuesta
     const answerDiv = document.getElementById("Game_Answer");
@@ -270,6 +319,52 @@ document.getElementById("btnExit").onclick = () => {
     showResults();
     playSound('Select.wav');
 };
+
+// Obtener referencias
+const manualInput = document.getElementById("GameManual_Answer");
+const suggestionDiv = document.getElementById("GameManual_Suggestion");
+
+// Escuchar input
+manualInput.addEventListener("input", () => {
+    const query = manualInput.value.trim().toLowerCase();
+    suggestionDiv.innerHTML = "";
+
+    if (!query){
+        suggestionDiv.style.display = "none"; // ocultar si no hay texto
+        return; // si no hay texto, no mostrar sugerencias
+    }
+
+    // Obtener todos los fangames únicos de quizData
+    const allFangames = [...new Set(quizData.flatMap(q => q.fangames))];
+
+    // Filtrar por coincidencia parcial
+    const matches = allFangames.filter(f => f.toLowerCase().includes(query)).slice(0, 8);
+
+    if (matches.length === 0) {
+        suggestionDiv.style.display = "none"; // ocultar si no hay coincidencias
+        return;
+    }
+
+    suggestionDiv.style.display = "block"; // mostrar sugerencias
+
+    // Mostrar resultados
+    matches.forEach(f => {
+        const div = document.createElement("div");
+        div.textContent = f;
+        div.classList.add("suggestion-item");
+        div.addEventListener("click", () => {
+            manualInput.value = f;       // completar input
+            suggestionDiv.innerHTML = ""; // limpiar sugerencias
+            manualInput.focus();         // volver a foco
+        });
+        suggestionDiv.appendChild(div);
+    });
+});
+
+// Evento para botón submit manual
+/*document.querySelector("#Game_Manual button").addEventListener("click", () => {
+    checkAnswer();
+});*/
 
 // Ir a la siguiente pregunta o terminar
 function nextQuestion() {
@@ -339,6 +434,10 @@ document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
     playSound('Click.wav',0.2);
 });
 
+document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
+    playSound('Click.wav',0.2);
+});
+
 // Agregar evento al pasar el mouse
 /*boton.addEventListener('mouseenter', () => {
     playSound('Click');
@@ -405,12 +504,6 @@ document.getElementById('timerRange').addEventListener('input', (e) => {
   document.getElementById('timerValue').textContent = val;
 });
 
-// Botón para bloquear videos inválidos
-document.getElementById('blockInvalidVideosBtn').addEventListener('click', () => {
-  gameConfig.blockInvalidVideos = !gameConfig.blockInvalidVideos;
-  
-  const status = document.getElementById('blockInvalidVideosStatus');
-  status.textContent = gameConfig.blockInvalidVideos ? 
-    "Estado: Bloqueando inválidos" : 
-    "Estado: Permitir todos";
-});
+function print(_text) {
+    console.log(_text);
+}
