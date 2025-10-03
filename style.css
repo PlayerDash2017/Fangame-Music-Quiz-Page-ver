@@ -1,0 +1,139 @@
+/* General */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', monospace;
+    color: white;
+    text-align: center;
+
+    color: white;
+    margin: 0;
+    height: 100vh;
+    background-image: url('img/bg.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+h2, h3 {
+    color: white;
+    text-shadow: 0px 0px 5px #00ff88;
+    margin-bottom: 10px;
+}
+
+/* Pantallas */
+#Screen_Loading, 
+#Screen_Title, 
+#Screen_InGame, 
+#Screen_Result {
+    display: none;
+    padding: 20px;
+}
+
+#Screen_Loading.active, 
+#Screen_Title.active, 
+#Screen_InGame.active, 
+#Screen_Result.active {
+    display: block;
+}
+
+/* Botones estilo arcade */
+button {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: black;
+    color: white;
+    border: 3px solid white;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Caja de opciones / respuestas */
+#Game_Option, 
+#Game_Manual, 
+#Game_Answer, 
+#Result_List, 
+#Config_Menu {
+    border: 2px solid white;
+    padding: 15px;
+    margin: 20px auto;
+    width: 60%;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+
+/* Input manual */
+input[type="text"] {
+    background: black;
+    color: white;
+    border: 2px solid white;
+    padding: 8px;
+    width: 80%;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+}
+
+/* Secciones divididas (como el panel de stats) */
+#Answer_Info, 
+#Result_List {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    text-align: left;
+}
+
+#Answer_Info {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#Result_List {
+    display: grid;
+}
+
+/* Estilo para textos importantes */
+#Game_Question, 
+#Game_Time {
+    font-size: 22px;
+    text-shadow: 0px 0px 8px #00ffcc;
+}
+
+/* Iframe del video */
+#Game_Video {
+    margin-top: 20px;
+    border: 2px solid white;
+    padding: 10px;
+    background: rgba(0,0,0,0.7);
+    display: inline-block;
+}
+
+
+/*#Game_Answer {
+  display: none;
+}
+
+body {
+    color: white;
+    margin: 0;
+    height: 100vh;
+    background-image: url('img/bg.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}*/
+
+#tsparticles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -10;
+}

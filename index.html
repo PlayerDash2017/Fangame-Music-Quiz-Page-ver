@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fangame Music Quiz</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="tsparticles"></div>
+
+    <div id="Screen_Loading">
+        <h2>Please, Upload the FMQ Excel file</h2>
+        <button id="btnLoadExcel" onclick="">Upload file</button>
+        <input type="file" id="excel-file" style="display:none;" onchange="" />
+    </div>
+
+    <div id="Screen_Title">
+        <img id="Title" src="./img/title.png" alt="title"/>
+
+        <button id="btnOptionMode" onclick="startOptionMode()">Option Mode</button>
+        <button id="btnManualMode" onclick="">Manual Mode</button>
+
+        <div id="Config_Menu">
+            <button id="btnConfig" onclick="">Questions Numbers</button>
+        </div>
+    </div>
+
+    <div id="Screen_InGame">
+        <h2 id="Game_Question">Question 1 - 20</h2>
+        <h2 id="Game_Time">Time: 50.0</h2>
+
+        <div id="Game_Video" margin-top: 20px;>
+            <iframe id="Video_iframe" width="560" height="315" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+
+        <div id="Game_Option">
+            <h3>Select a Answer</h3>
+            <div id="GameOption_List" class="Game_OptionList"></div>
+        </div>
+
+        <div id="Game_Manual" style="display: none;">
+            <h3>Answer</h3>
+            <input type="text" id="GameManual_Answer" placeholder="" list="GameManual_List"/>
+            <div id="GameManual_Suggestion" class="GameManual_Suggestion"></div>
+            <button onclick="">Summit</button>
+        </div>
+
+        <div id="Game_Answer" style="display: none;">
+            <h3 id="Answer_Text"></h3>
+            <div id="Answer_Info"></div>
+            <button id="btnContinue" onclick="">Continue</button>
+            <button id="btnExit" onclick="">Exit</button>
+        </div>
+    </div>
+
+    <div id="Screen_Result">
+        <h2>Results</h2>
+        <div id="Result_List"></div>
+
+        <button id="btnBackMenu" onclick="">Back</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <script src="particles.js"></script>
+</body>
+</html>
