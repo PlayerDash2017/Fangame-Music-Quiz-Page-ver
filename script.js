@@ -237,7 +237,7 @@ function generateOptions(fangamesArray) {
   
   let others = quizData.flatMap(q => q.fangames)
                        .filter(f => f !== correct);
-  others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 3);
+  others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 4);
 
   return [correct, ...others].sort(() => Math.random() - 0.5);
 }
