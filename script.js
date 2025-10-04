@@ -131,6 +131,14 @@ function showQuestion() {
     const videoUrl = extractYoutubeEmbed(q.youtube);
     document.getElementById("Video_iframe").src = videoUrl;
 
+    const videoName = document.getElementById("Video_Name");
+    if (gameConfig.musicName){
+        videoName.textContent = `${q.music}`;
+        videoName.style.display = "block";
+    } else {
+        videoName.style.display = "none";
+    }
+
     if (modeGame === "Option") {
         // Mostrar opciones
         const optionList = document.getElementById("GameOption_List");
@@ -392,12 +400,12 @@ function extractYoutubeEmbed(url) {
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
 
-
 let questionList = [];
 let results = []; // historial de respuestas
 
 function showResults() {
     showScreen("Screen_Result");
+    playMusic();
     document.getElementById("Video_iframe").src = "";
 
     const resultList = document.getElementById("Result_List");
@@ -426,7 +434,6 @@ function showResults() {
 document.getElementById("btnBackMenu").onclick = () => {
   results = [];
   playSound('Select.wav');
-  playMusic();
   showScreen("Screen_Title");
 };
 
@@ -437,11 +444,6 @@ document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
 document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
     playSound('Click.wav',0.2);
 });
-
-// Agregar evento al pasar el mouse
-/*boton.addEventListener('mouseenter', () => {
-    playSound('Click');
-});*/
 
 function playSound(fileName, fileVolume=1.0) {
     const audio = new Audio('snd/' + fileName);
@@ -472,7 +474,7 @@ const gameConfig = {
   rounds: 20,
   infiniteRounds: false,
   timer: 50,
-  blockInvalidVideos: false
+  musicName: false
 };
 
 // Evento para número de rondas
@@ -484,6 +486,7 @@ document.getElementById('roundsInput').addEventListener('input', (e) => {
 // Botón de rondas infinitas
 document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
     gameConfig.infiniteRounds = !gameConfig.infiniteRounds;
+    playSound('Select.wav');
 
     const input = document.getElementById('roundsInput');
     const status = document.getElementById('infiniteRoundsStatus');
@@ -499,9 +502,16 @@ document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
 
 // Slider de temporizador
 document.getElementById('timerRange').addEventListener('input', (e) => {
-  const val = parseInt(e.target.value);
-  gameConfig.timer = val;
-  document.getElementById('timerValue').textContent = val;
+    const val = parseInt(e.target.value);
+    gameConfig.timer = val;
+    document.getElementById('timerValue').textContent = val;
+});
+
+document.getElementById('musicNameBtn').addEventListener('click', () => {
+    gameConfig.musicName = !gameConfig.musicName;
+    playSound('Select.wav');
+
+    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name" : "Display Song Name";
 });
 
 function print(_text) {

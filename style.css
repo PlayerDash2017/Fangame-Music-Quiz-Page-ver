@@ -155,6 +155,17 @@ input[type="text"] {
     display: inline-block;
 }
 
+#Video_Name {
+    font-size: 2vw;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; 
+    padding: 10px;
+    box-sizing: border-box;
+    text-shadow: 0px 0px 5px #00ff88;
+}
+
 /* Configuraciones */
 #Config_Menu label {
     display: block;
