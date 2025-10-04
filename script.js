@@ -48,14 +48,22 @@ inputExcel.addEventListener("change", (event) => {
 
     // Convertimos toda la hoja a JSON (con encabezados generados por defecto)
     let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    rawData = rawData.slice(3);
+    rawData = rawData.slice(3); // Si quieres excluir las primeras filas (cabeceras u otros datos)
 
-    quizData = rawData.map(row => ({
-        youtube: row[0] || "",
-        fangames: (row[1] || "").split(";").map(f => f.trim()), // <-- array de fangames
-        music: row[2] || "",
-        author: row[3] || ""
-    }));
+    quizData = rawData.reduce((acc, row) => {
+      // Si alguna de las columnas de la fila está vacía, no agregamos esa fila a los datos
+      if (row[0] && row[1] && row[2] && row[3]) {
+        acc.push({
+          youtube: row[0] || "",
+          fangames: (row[1] || "").split(";").map(f => f.trim()), // <-- array de fangames
+          music: row[2] || "",
+          author: row[3] || ""
+        });
+      } else {
+        console.log("Fila ignorada por columna vacía:", row);
+      }
+      return acc;
+    }, []);
 
     console.log("Preguntas cargadas:", quizData);
     console.log("Archivo cargado:", workbook.SheetNames);
@@ -92,6 +100,9 @@ function startOptionMode() {
     timePerQuestion = gameConfig.timer;
     questionList = prepareQuestions();
     currentQuestionIndex = 0;
+
+    const soundDiv = document.getElementById("Sound_Setting");
+    soundDiv.style.display = "none";
     
     playSound('Select.wav');
     stopMusic();
@@ -106,6 +117,9 @@ function startManualMode() {
     timePerQuestion = gameConfig.timer;
     questionList = prepareQuestions();
     currentQuestionIndex = 0;
+
+    const soundDiv = document.getElementById("Sound_Setting");
+    soundDiv.style.display = "none";
 
     playSound('Select.wav');
     stopMusic();
@@ -419,8 +433,8 @@ function showResults() {
                         <h3>Incorrect: ${incorrectCount} / ${results.length}</h3>`;
     resultList.appendChild(summary);
 
-  // Lista detallada
-  results.forEach((r, i) => {
+    // Lista detallada
+    results.forEach((r, i) => {
     const div = document.createElement("div");
     div.innerHTML = `<strong>Q${i + 1} - ${r.question}</strong><br>
                      Your answer: ${r.selectedAnswer} ${r.isCorrect ? "✅" : "❌"}<br>
@@ -432,9 +446,13 @@ function showResults() {
 
 // Botón Back para reiniciar
 document.getElementById("btnBackMenu").onclick = () => {
-  results = [];
-  playSound('Select.wav');
-  showScreen("Screen_Title");
+    results = [];
+
+    const soundDiv = document.getElementById("Sound_Setting");
+    soundDiv.style.display = "block";
+
+    playSound('Select.wav');
+    showScreen("Screen_Title");
 };
 
 document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
@@ -448,9 +466,12 @@ document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
 function playSound(fileName, fileVolume=1.0) {
     const audio = new Audio('snd/' + fileName);
     audio.volume = fileVolume;
-    audio.play().catch(error => {
-        console.error("Error al reproducir el sonido:", error);
-    });
+
+    if (soundSetting.sound){
+        audio.play().catch(error => {
+            console.error("Error al reproducir el sonido:", error);
+        });
+    }
 }
 
 // Crear el audio de fondo
@@ -512,6 +533,30 @@ document.getElementById('musicNameBtn').addEventListener('click', () => {
     playSound('Select.wav');
 
     document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name" : "Display Song Name";
+});
+
+const soundSetting = {
+    sound: true,
+    music: true
+}
+
+//Activar/Desactivar la musica y los sonidos
+document.getElementById('btnToggleMusic').addEventListener('click', () => {
+    soundSetting.music = !soundSetting.music;
+
+    if (soundSetting.music) musMenu.volume = 0.2;
+    else musMenu.volume = 0.0;
+
+    document.getElementById('btnToggleMusic').textContent = `Music: ${soundSetting.music ? "On" : "Off"}`;
+
+    playSound('Select.wav');
+});
+document.getElementById('btnToggleSound').addEventListener('click', () => {
+    soundSetting.sound = !soundSetting.sound;
+
+    document.getElementById('btnToggleSound').textContent = `Sounds: ${soundSetting.sound ? "On" : "Off"}`;
+
+    playSound('Select.wav');
 });
 
 function print(_text) {
