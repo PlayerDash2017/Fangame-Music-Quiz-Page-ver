@@ -10,8 +10,14 @@
     <div id="tsparticles"></div>
 
     <div id="Sound_Setting">
-        <button id="btnToggleMusic">Music: On</button>
-        <button id="btnToggleSound">Sounds: On</button>
+        <button id="btnSettingMusic">Music</button>
+        <button id="btnSettingSound">Sounds</button>
+        <div id="musicSettings" style="display: none;">
+            <input type="range" id="rangeMusic" min="0" max="100" value="100">
+        </div>
+        <div id="soundSettings" style="display: none;">
+            <input type="range" id="rangeSound" min="0" max="100" value="100">
+        </div>
     </div>
 
     <div id="Screen_Loading">

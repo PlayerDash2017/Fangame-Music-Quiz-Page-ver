@@ -66,7 +66,7 @@ button:hover {
     border: 2px solid white;
     padding: 15px;
     margin: 20px auto;
-    width: 65%;
+    width: 70%;
     background-color: rgba(0, 0, 0, 0.6);
 }
 
@@ -239,6 +239,29 @@ body {
     background-position: center;
     background-attachment: fixed;
 }*/
+
+/* Estilo de la configuración de sonido y música (arriba) */
+#Sound_Setting {
+    margin: 20px auto;
+    width: 80%;  /* Ajustamos el ancho para que no quede demasiado amplio */
+    text-align: center;
+}
+
+#Sound_Setting button {
+    font-size: 15px;
+}
+
+#Sound_Setting input[type="range"] {
+    width: 30%;  /* Puedes ajustarlo al tamaño que prefieras */
+    padding: 3px;
+    margin: 10px auto; /* Esto lo centra y le da espacio arriba y abajo */
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    box-sizing: border-box;
+    display: block;  /* Asegura que se comporte como un bloque */
+}
+
 
 #tsparticles {
     position: absolute;

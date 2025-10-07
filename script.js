@@ -465,13 +465,11 @@ document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
 
 function playSound(fileName, fileVolume=1.0) {
     const audio = new Audio('snd/' + fileName);
-    audio.volume = fileVolume;
+    audio.volume = fileVolume * (soundSetting.sound / 100);
 
-    if (soundSetting.sound){
-        audio.play().catch(error => {
-            console.error("Error al reproducir el sonido:", error);
-        });
-    }
+    audio.play().catch(error => {
+        console.error("Error al reproducir el sonido:", error);
+    });
 }
 
 // Crear el audio de fondo
@@ -536,28 +534,53 @@ document.getElementById('musicNameBtn').addEventListener('click', () => {
 });
 
 const soundSetting = {
-    sound: true,
-    music: true
+    sound: 100,
+    music: 100
 }
 
-//Activar/Desactivar la musica y los sonidos
-document.getElementById('btnToggleMusic').addEventListener('click', () => {
-    soundSetting.music = !soundSetting.music;
+const btnSettingMusic = document.getElementById("btnSettingMusic");
+const btnSettingSound = document.getElementById("btnSettingSound");
+const musicSettings = document.getElementById("musicSettings");
+const soundSettings = document.getElementById("soundSettings");
+const rangeMusic = document.getElementById("rangeMusic");
+const rangeSound = document.getElementById("rangeSound");
 
-    if (soundSetting.music) musMenu.volume = 0.2;
-    else musMenu.volume = 0.0;
+// Función para actualizar el volumen de música
+rangeMusic.addEventListener("input", function() {
+    soundSetting.music = rangeMusic.value;
+    console.log("Music Volume:", soundSetting.music);
+    musMenu.volume = 0.2 * (soundSetting.music / 100);
+});
 
-    document.getElementById('btnToggleMusic').textContent = `Music: ${soundSetting.music ? "On" : "Off"}`;
+// Función para actualizar el volumen de sonido
+rangeSound.addEventListener("input", function() {
+    soundSetting.sound = rangeSound.value;
+    console.log("Sound Volume:", soundSetting.sound);
+});
+
+// Función para alternar la visibilidad de los controles
+btnSettingMusic.addEventListener("click", function() {
+    if (musicSettings.style.display === "none") {
+        musicSettings.style.display = "flex";
+        soundSettings.style.display = "none"; // Ocultar el control de sonido
+    } else {
+        musicSettings.style.display = "none";
+    }
 
     playSound('Select.wav');
 });
-document.getElementById('btnToggleSound').addEventListener('click', () => {
-    soundSetting.sound = !soundSetting.sound;
 
-    document.getElementById('btnToggleSound').textContent = `Sounds: ${soundSetting.sound ? "On" : "Off"}`;
+btnSettingSound.addEventListener("click", function() {
+    if (soundSettings.style.display === "none") {
+        soundSettings.style.display = "flex";
+        musicSettings.style.display = "none"; // Ocultar el control de música
+    } else {
+        soundSettings.style.display = "none";
+    }
 
     playSound('Select.wav');
 });
+
 
 function print(_text) {
     console.log(_text);
