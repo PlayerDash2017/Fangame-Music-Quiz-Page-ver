@@ -383,6 +383,14 @@ manualInput.addEventListener("input", () => {
     });
 });
 
+// Evento para la tecla ENTER
+manualInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        suggestionDiv.style.display = "none";  // Ocultar las sugerencias al presionar Enter
+        checkAnswer();  // También puedes agregar la función de submit si es necesario
+    }
+});
+
 // Evento para botón submit manual
 /*document.querySelector("#Game_Manual button").addEventListener("click", () => {
     checkAnswer();
@@ -530,7 +538,7 @@ document.getElementById('musicNameBtn').addEventListener('click', () => {
     gameConfig.musicName = !gameConfig.musicName;
     playSound('Select.wav');
 
-    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name" : "Display Song Name";
+    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name: On" : "Show Song Name: Off";
 });
 
 const soundSetting = {
