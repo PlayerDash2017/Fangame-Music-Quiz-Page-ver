@@ -1,12 +1,6 @@
 // script.js
 
-// Lista de IDs de pantallas
-const screens = [
-  "Screen_Loading",
-  "Screen_Title",
-  "Screen_InGame",
-  "Screen_Result"
-];
+// #region Misc
 
 // Función para mostrar una pantalla y ocultar el resto
 function showScreen(screenId) {
@@ -17,6 +11,47 @@ function showScreen(screenId) {
     }
   });
 }
+
+function playSound(fileName, fileVolume=1.0) {
+    const audio = new Audio('snd/' + fileName);
+    audio.volume = fileVolume * (soundSetting.sound / 100);
+
+    audio.play().catch(error => {
+        console.error("Error al reproducir el sonido:", error);
+    });
+}
+
+// Crear el audio de fondo
+const musMenu = new Audio('snd/Menu.mp3');
+musMenu.loop = true; // Activar el loop
+musMenu.volume = 0.2; // (Opcional) Ajustar volumen entre 0.0 y 1.0
+
+function playMusic() {
+    musMenu.play().catch(error => {
+        console.error("No se pudo reproducir la música de fondo:", error);
+    });
+}
+
+function stopMusic() {
+    musMenu.pause();
+    musMenu.currentTime = 0; // Reiniciar desde el principio si la quieres volver a tocar luego
+}
+
+function print(_text) {
+    console.log(_text);
+}
+
+// #endregion
+
+// #region Loading Screen
+
+// Lista de IDs de pantallas
+const screens = [
+  "Screen_Loading",
+  "Screen_Title",
+  "Screen_InGame",
+  "Screen_Result"
+];
 
 // Referencias
 const btnLoadExcel = document.getElementById("btnLoadExcel");
@@ -77,6 +112,63 @@ function loadCSV(ruta) {
     });
 }
 
+const soundSetting = {
+    sound: 100,
+    music: 100
+}
+
+const btnSettingMusic = document.getElementById("btnSettingMusic");
+const btnSettingSound = document.getElementById("btnSettingSound");
+const musicSettings = document.getElementById("musicSettings");
+const soundSettings = document.getElementById("soundSettings");
+const rangeMusic = document.getElementById("rangeMusic");
+const rangeSound = document.getElementById("rangeSound");
+
+// Función para actualizar el volumen de música
+rangeMusic.addEventListener("input", function() {
+    soundSetting.music = rangeMusic.value;
+    console.log("Music Volume:", soundSetting.music);
+    musMenu.volume = 0.2 * (soundSetting.music / 100);
+});
+
+// Función para actualizar el volumen de sonido
+rangeSound.addEventListener("input", function() {
+    soundSetting.sound = rangeSound.value;
+    console.log("Sound Volume:", soundSetting.sound);
+});
+
+// Función para alternar la visibilidad de los controles
+btnSettingMusic.addEventListener("click", function() {
+    if (musicSettings.style.display === "none") {
+        musicSettings.style.display = "flex";
+        soundSettings.style.display = "none"; // Ocultar el control de sonido
+    } else {
+        musicSettings.style.display = "none";
+    }
+
+    playSound('Select.wav');
+});
+
+btnSettingSound.addEventListener("click", function() {
+    if (soundSettings.style.display === "none") {
+        soundSettings.style.display = "flex";
+        musicSettings.style.display = "none"; // Ocultar el control de música
+    } else {
+        soundSettings.style.display = "none";
+    }
+
+    playSound('Select.wav');
+});
+
+
+function print(_text) {
+    console.log(_text);
+}
+
+// #endregion
+
+// #region Title Screen
+
 let totalQuestions, timePerQuestion;
 //let totalQuestions = 20;
 //let timePerQuestion = 50.0; // segundos
@@ -130,6 +222,55 @@ function startManualMode() {
     showQuestion();
 }
 
+// Estado de configuración
+const gameConfig = {
+  rounds: 20,
+  infiniteRounds: false,
+  timer: 50,
+  musicName: false
+};
+
+// Evento para número de rondas
+document.getElementById('roundsInput').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value);
+  gameConfig.rounds = Math.max(1, val || 1);
+});
+
+// Botón de rondas infinitas
+document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
+    gameConfig.infiniteRounds = !gameConfig.infiniteRounds;
+    playSound('Select.wav');
+
+    const input = document.getElementById('roundsInput');
+    const status = document.getElementById('infiniteRoundsStatus');
+
+    if (gameConfig.infiniteRounds) {
+        input.disabled = true;
+        status.textContent = "Infinite";
+    } else {
+        input.disabled = false;
+        status.textContent = "Limited";
+    }
+});
+
+// Slider de temporizador
+document.getElementById('timerRange').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    gameConfig.timer = val;
+    document.getElementById('timerValue').textContent = val;
+});
+
+document.getElementById('musicNameBtn').addEventListener('click', () => {
+    gameConfig.musicName = !gameConfig.musicName;
+    playSound('Select.wav');
+
+    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name: On" : "Show Song Name: Off";
+});
+
+// #endregion
+
+// #region InGame Screen
+
 // Mostrar una pregunta
 function showQuestion() {
     const q = questionList[currentQuestionIndex];
@@ -180,8 +321,17 @@ function showQuestion() {
 }
 
 // Actualizar el temporizador
+let lastSecond = null; // variable global para controlar el sonido
 function updateTimer() {
     timeLeft -= 0.1;
+
+    // Sonido de countdown en los últimos 10 segundos
+    const currentSecond = Math.ceil(timeLeft); // número entero del segundo actual
+    if (timeLeft <= 10  && timeLeft > 0 && currentSecond !== lastSecond) {
+        playSound('Clock.wav',0.5);
+        lastSecond = currentSecond;
+    }
+
     if (timeLeft <= 0) {
         clearInterval(currentTimer);
         timeLeft = 0;
@@ -394,11 +544,6 @@ manualInput.addEventListener("keydown", (event) => {
     }
 });
 
-// Evento para botón submit manual
-/*document.querySelector("#Game_Manual button").addEventListener("click", () => {
-    checkAnswer();
-});*/
-
 // Ir a la siguiente pregunta o terminar
 function nextQuestion() {
     currentQuestionIndex++;
@@ -424,6 +569,10 @@ function extractYoutubeEmbed(url) {
     // Construir URL para iframe
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
+
+// #endregion
+
+// #region Result Screen
 
 let questionList = [];
 let results = []; // historial de respuestas
@@ -474,125 +623,4 @@ document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
     playSound('Click.wav',0.2);
 });
 
-function playSound(fileName, fileVolume=1.0) {
-    const audio = new Audio('snd/' + fileName);
-    audio.volume = fileVolume * (soundSetting.sound / 100);
-
-    audio.play().catch(error => {
-        console.error("Error al reproducir el sonido:", error);
-    });
-}
-
-// Crear el audio de fondo
-const musMenu = new Audio('snd/Menu.mp3');
-musMenu.loop = true; // Activar el loop
-musMenu.volume = 0.2; // (Opcional) Ajustar volumen entre 0.0 y 1.0
-
-function playMusic() {
-    musMenu.play().catch(error => {
-        console.error("No se pudo reproducir la música de fondo:", error);
-    });
-}
-
-function stopMusic() {
-    musMenu.pause();
-    musMenu.currentTime = 0; // Reiniciar desde el principio si la quieres volver a tocar luego
-}
-
-// Estado de configuración
-const gameConfig = {
-  rounds: 20,
-  infiniteRounds: false,
-  timer: 50,
-  musicName: false
-};
-
-// Evento para número de rondas
-document.getElementById('roundsInput').addEventListener('input', (e) => {
-  const val = parseInt(e.target.value);
-  gameConfig.rounds = Math.max(1, val || 1);
-});
-
-// Botón de rondas infinitas
-document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
-    gameConfig.infiniteRounds = !gameConfig.infiniteRounds;
-    playSound('Select.wav');
-
-    const input = document.getElementById('roundsInput');
-    const status = document.getElementById('infiniteRoundsStatus');
-
-    if (gameConfig.infiniteRounds) {
-        input.disabled = true;
-        status.textContent = "Infinite";
-    } else {
-        input.disabled = false;
-        status.textContent = "Limited";
-    }
-});
-
-// Slider de temporizador
-document.getElementById('timerRange').addEventListener('input', (e) => {
-    const val = parseInt(e.target.value);
-    gameConfig.timer = val;
-    document.getElementById('timerValue').textContent = val;
-});
-
-document.getElementById('musicNameBtn').addEventListener('click', () => {
-    gameConfig.musicName = !gameConfig.musicName;
-    playSound('Select.wav');
-
-    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name: On" : "Show Song Name: Off";
-});
-
-const soundSetting = {
-    sound: 100,
-    music: 100
-}
-
-const btnSettingMusic = document.getElementById("btnSettingMusic");
-const btnSettingSound = document.getElementById("btnSettingSound");
-const musicSettings = document.getElementById("musicSettings");
-const soundSettings = document.getElementById("soundSettings");
-const rangeMusic = document.getElementById("rangeMusic");
-const rangeSound = document.getElementById("rangeSound");
-
-// Función para actualizar el volumen de música
-rangeMusic.addEventListener("input", function() {
-    soundSetting.music = rangeMusic.value;
-    console.log("Music Volume:", soundSetting.music);
-    musMenu.volume = 0.2 * (soundSetting.music / 100);
-});
-
-// Función para actualizar el volumen de sonido
-rangeSound.addEventListener("input", function() {
-    soundSetting.sound = rangeSound.value;
-    console.log("Sound Volume:", soundSetting.sound);
-});
-
-// Función para alternar la visibilidad de los controles
-btnSettingMusic.addEventListener("click", function() {
-    if (musicSettings.style.display === "none") {
-        musicSettings.style.display = "flex";
-        soundSettings.style.display = "none"; // Ocultar el control de sonido
-    } else {
-        musicSettings.style.display = "none";
-    }
-
-    playSound('Select.wav');
-});
-
-btnSettingSound.addEventListener("click", function() {
-    if (soundSettings.style.display === "none") {
-        soundSettings.style.display = "flex";
-        musicSettings.style.display = "none"; // Ocultar el control de música
-    } else {
-        soundSettings.style.display = "none";
-    }
-
-    playSound('Select.wav');
-});
-
-
-function print(_text) {
-    console.log(_text);
-}
+// #endregion
