@@ -27,52 +27,55 @@ showScreen("Screen_Loading");
 
 // Botón que abre el input file
 btnLoadExcel.addEventListener("click", () => {
-  inputExcel.click();
+  loadCSV('FMQ.csv'); // Nombre del archivo CSV
   playSound('Select.wav');
 });
 
 // Cuando se selecciona un archivo
 let quizData = []; // Aquí guardaremos las preguntas
-inputExcel.addEventListener("change", (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+// Función para cargar el CSV automáticamente
+function loadCSV(ruta) {
+  fetch(ruta)
+    .then(response => {
+      if (!response.ok) throw new Error('No se pudo cargar el CSV');
+      return response.text();
+    })
+    .then(texto => {
+      // PapaParse maneja comas, comillas, saltos de línea, etc.
+      const resultado = Papa.parse(texto, {
+        header: false,   // si tu CSV no tiene encabezados
+        skipEmptyLines: true
+      });
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: "array" });
+      const filas = resultado.data;//texto.trim().split('\n').map(f => f.split(','));
 
-    // Tomamos la primera hoja del Excel
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
+      // Si tu CSV tiene encabezados o filas de descripción, ajusta esto:
+      const rawData = filas.slice(3); // igual que antes: omite las 3 primeras filas
 
-    // Convertimos toda la hoja a JSON (con encabezados generados por defecto)
-    let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    rawData = rawData.slice(3); // Si quieres excluir las primeras filas (cabeceras u otros datos)
+      quizData = rawData.reduce((acc, row) => {
+        if (row[0] && row[1] && row[2] && row[3]) {
+          acc.push({
+            youtube: row[0] || "",
+            fangames: (row[1] || "").split(';').map(f => f.trim()),
+            music: row[2] || "",
+            author: row[3] || ""
+          });
+        } else {
+          console.log("Fila ignorada por columna vacía:", row);
+        }
+        return acc;
+      }, []);
 
-    quizData = rawData.reduce((acc, row) => {
-      // Si alguna de las columnas de la fila está vacía, no agregamos esa fila a los datos
-      if (row[0] && row[1] && row[2] && row[3]) {
-        acc.push({
-          youtube: row[0] || "",
-          fangames: (row[1] || "").split(";").map(f => f.trim()), // <-- array de fangames
-          music: row[2] || "",
-          author: row[3] || ""
-        });
-      } else {
-        console.log("Fila ignorada por columna vacía:", row);
-      }
-      return acc;
-    }, []);
+      console.log("Preguntas cargadas:", quizData);
 
-    console.log("Preguntas cargadas:", quizData);
-    console.log("Archivo cargado:", workbook.SheetNames);
-
-    playMusic();
-    showScreen("Screen_Title");
-  };
-  reader.readAsArrayBuffer(file);
-});
+      playMusic();
+      showScreen("Screen_Title");
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Error al cargar el archivo CSV.");
+    });
+}
 
 let totalQuestions, timePerQuestion;
 //let totalQuestions = 20;
