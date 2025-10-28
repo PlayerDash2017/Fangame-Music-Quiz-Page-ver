@@ -12,6 +12,21 @@ function showScreen(screenId) {
   });
 }
 
+window.addEventListener("DOMContentLoaded", () => {
+    const volumeSaved = localStorage.getItem("soundSetting");
+    if (volumeSaved) {
+        soundSetting = JSON.parse(volumeSaved);
+        console.log("Configuración cargada:", soundSetting);
+
+        musMenu.volume = 0.2 * (soundSetting.music / 100);
+
+        rangeSound.value = soundSetting.sound
+        rangeMusic.value = soundSetting.music
+    } else {
+        console.log("No había configuración guardada, usando valores por defecto.");
+    }
+});
+
 function playSound(fileName, fileVolume=1.0) {
     const audio = new Audio('snd/' + fileName);
     audio.volume = fileVolume * (soundSetting.sound / 100);
@@ -54,14 +69,13 @@ const screens = [
 ];
 
 // Referencias
-const btnLoadExcel = document.getElementById("btnLoadExcel");
-const inputExcel   = document.getElementById("excel-file");
+const btnLoadCSV = document.getElementById("btnLoadCSV");
 
 // Al iniciar: solo pantalla de carga
 showScreen("Screen_Loading");
 
 // Botón que abre el input file
-btnLoadExcel.addEventListener("click", () => {
+btnLoadCSV.addEventListener("click", () => {
   loadCSV('FMQ.csv'); // Nombre del archivo CSV
   playSound('Select.wav');
 });
@@ -112,7 +126,7 @@ function loadCSV(ruta) {
     });
 }
 
-const soundSetting = {
+let soundSetting = {
     sound: 100,
     music: 100
 }
@@ -129,12 +143,18 @@ rangeMusic.addEventListener("input", function() {
     soundSetting.music = rangeMusic.value;
     console.log("Music Volume:", soundSetting.music);
     musMenu.volume = 0.2 * (soundSetting.music / 100);
+
+    localStorage.setItem("soundSetting", JSON.stringify(soundSetting));
+    console.log("Configuración guardada:", soundSetting);
 });
 
 // Función para actualizar el volumen de sonido
 rangeSound.addEventListener("input", function() {
     soundSetting.sound = rangeSound.value;
     console.log("Sound Volume:", soundSetting.sound);
+
+    localStorage.setItem("soundSetting", JSON.stringify(soundSetting));
+    console.log("Configuración guardada:", soundSetting);
 });
 
 // Función para alternar la visibilidad de los controles
@@ -266,6 +286,58 @@ document.getElementById('musicNameBtn').addEventListener('click', () => {
 
     document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name: On" : "Show Song Name: Off";
 });
+
+/*const btnLoadExcel = document.getElementById("btnLoadExcel");
+const inputExcel   = document.getElementById("excel-file");
+
+// Botón que abre el input file
+btnLoadExcel.addEventListener("click", () => {
+  inputExcel.click();
+  playSound('Select.wav');
+});
+
+inputExcel.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    quizData = [];
+
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    // Tomamos la primera hoja del Excel
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    // Convertimos toda la hoja a JSON (con encabezados generados por defecto)
+    let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    rawData = rawData.slice(3); // Si quieres excluir las primeras filas (cabeceras u otros datos)
+
+    quizData = rawData.reduce((acc, row) => {
+      // Si alguna de las columnas de la fila está vacía, no agregamos esa fila a los datos
+      if (row[0] && row[1] && row[2] && row[3]) {
+        acc.push({
+          youtube: row[0] || "",
+          fangames: (row[1] || "").split(";").map(f => f.trim()), // <-- array de fangames
+          music: row[2] || "",
+          author: row[3] || ""
+        });
+      } else {
+        console.log("Fila ignorada por columna vacía:", row);
+      }
+      return acc;
+    }, []);
+
+    console.log("Preguntas cargadas:", quizData);
+    console.log("Archivo cargado:", workbook.SheetNames);
+
+    playMusic();
+    showScreen("Screen_Title");
+  };
+  reader.readAsArrayBuffer(file);
+});*/
 
 // #endregion
 
