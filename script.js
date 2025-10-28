@@ -4,12 +4,12 @@
 
 // Función para mostrar una pantalla y ocultar el resto
 function showScreen(screenId) {
-  screens.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.style.display = (id === screenId) ? "block" : "none";
-    }
-  });
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = (id === screenId) ? "block" : "none";
+        }
+    });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -68,57 +68,56 @@ const screens = [
   "Screen_Result"
 ];
 
-// Referencias
-const btnLoadCSV = document.getElementById("btnLoadCSV");
-
-// Al iniciar: solo pantalla de carga
 showScreen("Screen_Loading");
 
 // Botón que abre el input file
+const btnLoadCSV = document.getElementById("btnLoadCSV");
 btnLoadCSV.addEventListener("click", () => {
-  loadCSV('FMQ.csv'); // Nombre del archivo CSV
+  loadCSV('FMQ.csv'); 
   playSound('Select.wav');
 });
 
-// Cuando se selecciona un archivo
-let quizData = []; // Aquí guardaremos las preguntas
+let quizData = [];
+
 // Función para cargar el CSV automáticamente
 function loadCSV(ruta) {
-  fetch(ruta)
-    .then(response => {
-      if (!response.ok) throw new Error('No se pudo cargar el CSV');
-      return response.text();
+// Añadimos un parámetro único para evitar caché
+    const url = ruta + '?v=' + new Date().getTime();
+    fetch(url)
+        .then(response => {
+        if (!response.ok) throw new Error('No se pudo cargar el CSV');
+        return response.text();
     })
     .then(texto => {
-      // PapaParse maneja comas, comillas, saltos de línea, etc.
-      const resultado = Papa.parse(texto, {
-        header: false,   // si tu CSV no tiene encabezados
-        skipEmptyLines: true
-      });
+        // PapaParse maneja comas, comillas, saltos de línea, etc.
+        const resultado = Papa.parse(texto, {
+            header: false,   // si tu CSV no tiene encabezados
+            skipEmptyLines: true
+        });
 
-      const filas = resultado.data;//texto.trim().split('\n').map(f => f.split(','));
+        const filas = resultado.data;//texto.trim().split('\n').map(f => f.split(','));
 
-      // Si tu CSV tiene encabezados o filas de descripción, ajusta esto:
-      const rawData = filas.slice(3); // igual que antes: omite las 3 primeras filas
+        // Si tu CSV tiene encabezados o filas de descripción, ajusta esto:
+        const rawData = filas.slice(3); // igual que antes: omite las 3 primeras filas
 
-      quizData = rawData.reduce((acc, row) => {
-        if (row[0] && row[1] && row[2] && row[3]) {
-          acc.push({
-            youtube: row[0] || "",
-            fangames: (row[1] || "").split(';').map(f => f.trim()),
-            music: row[2] || "",
-            author: row[3] || ""
-          });
-        } else {
-          console.log("Fila ignorada por columna vacía:", row);
-        }
-        return acc;
-      }, []);
+        quizData = rawData.reduce((acc, row) => {
+            if (row[0] && row[1] && row[2] && row[3]) {
+                acc.push({
+                    youtube: row[0] || "",
+                    fangames: (row[1] || "").split(';').map(f => f.trim()),
+                    music: row[2] || "",
+                    author: row[3] || ""
+                });
+            } else {
+                console.log("Fila ignorada por columna vacía:", row);
+            }
+            return acc;
+        }, []);
 
-      console.log("Preguntas cargadas:", quizData);
+        console.log("Preguntas cargadas:", quizData);
 
-      playMusic();
-      showScreen("Screen_Title");
+        playMusic();
+        showScreen("Screen_Title");
     })
     .catch(error => {
       console.error(error);
@@ -126,6 +125,7 @@ function loadCSV(ruta) {
     });
 }
 
+//Configuracion del volumen
 let soundSetting = {
     sound: 100,
     music: 100
