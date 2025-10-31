@@ -457,36 +457,6 @@ function handleTimeUp() {
 }
 
 function generateOptions(fangamesArray) {
-    // Seleccionamos la opción correcta
-    const correct = fangamesArray[Math.floor(Math.random() * fangamesArray.length)];
-
-    // Obtenemos todos los fangames posibles excluyendo la opción correcta
-    let others = quizData.flatMap(q => q.fangames)
-                         .filter(f => f !== correct);
-
-    // Eliminar duplicados (por si existen elementos duplicados en `others`)
-    others = [...new Set(others)];
-
-    // Si no tenemos suficientes opciones únicas, agregamos más hasta llenar 4 opciones incorrectas
-    let additionalOptions = [];
-    while (additionalOptions.length < 4 && others.length > 0) {
-        const randomOption = others.splice(Math.floor(Math.random() * others.length), 1)[0];
-        additionalOptions.push(randomOption);
-    }
-
-    // Verificación de duplicados (para pruebas)
-    const allOptions = [correct, ...additionalOptions];
-    const uniqueOptions = new Set(allOptions);
-    if (allOptions.length !== uniqueOptions.size) {
-        print(`¡Se encontraron opciones duplicadas! ${allOptions}`);
-    }
-
-    // Mezclamos las opciones y devolvemos la correcta junto a las incorrectas
-    return [correct, ...additionalOptions].sort(() => Math.random() - 0.5);
-}
-
-// Old
-/*function generateOptions(fangamesArray) {
     const correct = fangamesArray[Math.floor(Math.random() * fangamesArray.length)];
 
     let others = quizData.flatMap(q => q.fangames)
@@ -494,7 +464,7 @@ function generateOptions(fangamesArray) {
     others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 4);
 
     return [correct, ...others].sort(() => Math.random() - 0.5);
-}*/
+}
 
 // Renderizar botones de opciones
 function renderOptions(options, correctAnswer) {
