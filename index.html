@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fangame Music Quiz</title>
-    <link rel="icon" type="image/png" sizes="96x96" href="img/Icon.png">
+    <link rel="icon" type="image/png" href="img/Icon.png" sizes="75x75">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -40,7 +40,6 @@
 
             <!-- Botón Rondas Infinitas -->
             <button id="infiniteRoundsBtn">Infinite Question</button>
-            <p id="infiniteRoundsStatus">Limited</p>
 
             <!-- Temporizador -->
             <label for="timerRange">Timer: <span id="timerValue">50</span>s</label>
@@ -49,9 +48,10 @@
             <!-- Nombre de la musica -->
             <button id="musicNameBtn">Show Song Name: Off</button>
 
-            <!--  <p>Customize FMQ Excel</p>
+            <!-- Cargar un Excel custom -->
+            <p>Customize FMQ Excel</p>
             <button id="btnLoadExcel" onclick="">Upload file</button>
-            <input type="file" id="excel-file" style="display:none;" onchange="" /> -->
+            <input type="file" id="excel-file" style="display:none;" onchange="" /> 
         </div>
     </div>
 
@@ -69,11 +69,11 @@
             <div id="GameOption_List" class="Game_OptionList"></div>
         </div>
 
-        <div id="Game_Manual" style="display: none;">
+        <div id="Game_Manual">
             <h3>Answer</h3>
             <input type="text" id="GameManual_Answer" placeholder="" list="GameManual_List"/>
             <div id="GameManual_Suggestion" class="GameManual_Suggestion"></div>
-            <button onclick="checkAnswer()">Submit</button>
+            <button id="GameManual_Submit" onclick="">Submit</button>
         </div>
 
         <div id="Game_Answer" style="display: none;">
@@ -86,15 +86,18 @@
 
     <div id="Screen_Result">
         <h2>Results</h2>
+        <h1 id="Result_Score">Your Score</h1>
         <div id="Result_List"></div>
 
         <button id="btnBackMenu" onclick="">Back</button>
     </div>
 
+    <!-- Soporte de CSV y Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="script.js"></script>
 
+    <!-- Particles -->
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
     <script src="particles.js"></script>
 </body>

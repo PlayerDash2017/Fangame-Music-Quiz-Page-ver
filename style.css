@@ -44,7 +44,7 @@ button {
     font-size: 18px;
     padding: 10px 20px;
     margin: 10px;
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.726);
     color: white;
     border: 3px solid white;
     cursor: pointer;
@@ -70,10 +70,35 @@ button:hover {
     background-color: rgba(0, 0, 0, 0.6);
 }
 
+#GameOption_List {
+    display: flex;           /* Usamos flexbox para alinearlos en fila */
+}
+
+/* Contenedor de sugerencias */
+
+/* Cada item de sugerencia */
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.2); /* línea muy tenue */
+}
+
+/* Hover sobre item */
+.suggestion-item:hover {
+    background-color: rgba(255,255,255,0.2); /* highlight sutil */
+    color: black;
+}
+
+/* Ajuste input manual para que se vea más integrado */
+#Game_Manual input[type="text"] {
+    position: relative;       /* necesario para que las sugerencias floten */
+    width: 100%;
+    box-sizing: border-box;
+}
 
 /* Input manual */
 input[type="text"] {
-    background: black;
+    background: rgba(0, 0, 0, 0.6);
     color: white;
     border: 2px solid white;
     padding: 8px;
@@ -99,51 +124,15 @@ input[type="text"] {
     display: grid;
 }
 
+#Result_Score {
+    text-shadow: 0px 0px 8px #6affa8;
+}
+
 /* Estilo para textos importantes */
 #Game_Question, 
 #Game_Time {
     font-size: 22px;
     text-shadow: 0px 0px 8px #00ffcc;
-}
-
-/* Contenedor de sugerencias */
-#GameManual_Suggestion {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.7); /* fondo negro con transparencia 70% */
-    border: none;                  /* sin bordes */
-    width: 60%;                     /* igual que el input */
-    max-height: 180px;
-    overflow-y: auto;
-    margin: 0 auto;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    text-align: left;
-    font-family: 'Courier New', monospace;
-    font-size: 16px;
-    box-sizing: border-box;
-    padding: 0;
-    display: none;                  /* oculto por defecto */
-}
-
-/* Cada item de sugerencia */
-#GameManual_Suggestion .suggestion-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.2); /* línea muy tenue */
-}
-
-/* Hover sobre item */
-#GameManual_Suggestion .suggestion-item:hover {
-    background-color: rgba(255,255,255,0.2); /* highlight sutil */
-    color: black;
-}
-
-/* Ajuste input manual para que se vea más integrado */
-#Game_Manual input[type="text"] {
-    position: relative;       /* necesario para que las sugerencias floten */
-    width: 100%;
-    box-sizing: border-box;
 }
 
 /* Iframe del video */
@@ -178,7 +167,8 @@ input[type="text"] {
 }
 
 #Config_Menu input[type="number"],
-#Config_Menu input[type="range"] {
+#Config_Menu input[type="range"],
+#Config_Menu input[type="text"] {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
@@ -214,31 +204,14 @@ input[type="text"] {
     text-shadow: 0 0 6px #00ff88;
 }
 
-#infiniteRoundsBtn {
-    width: 60%;
+#infiniteRoundsBtn, #musicNameBtn, #btnLoadExcel {
+    width: 70%;
     max-width: 250px;
     margin: 15px auto 5px auto; /* top right bottom left */
     display: block;
     font-size: 16px;
     padding: 8px 16px;
 }
-
-
-
-/*#Game_Answer {
-  display: none;
-}
-
-body {
-    color: white;
-    margin: 0;
-    height: 100vh;
-    background-image: url('img/bg.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-attachment: fixed;
-}*/
 
 /* Estilo de la configuración de sonido y música (arriba) */
 #Sound_Setting {
@@ -262,7 +235,7 @@ body {
     display: block;  /* Asegura que se comporte como un bloque */
 }
 
-
+/* Fondo de partículas */
 #tsparticles {
     position: absolute;
     width: 100%;

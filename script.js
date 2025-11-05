@@ -1,45 +1,180 @@
 // script.js
 
-// #region Misc
+//#region Init, Misc
 
-// Función para mostrar una pantalla y ocultar el resto
-function showScreen(screenId) {
-    screens.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.style.display = (id === screenId) ? "block" : "none";
-        }
-    });
-}
+// --- Configuración general ---
+let totalQuestions = 20;
+let infiniteMode = false;
+let timerValue = 50;
+let showSongName = false;
 
-window.addEventListener("DOMContentLoaded", () => {
-    const volumeSaved = localStorage.getItem("soundSetting");
-    if (volumeSaved) {
-        soundSetting = JSON.parse(volumeSaved);
-        console.log("Configuración cargada:", soundSetting);
+// --- Estados del juego ---
+let gameMode = "Option";
+let currentQuestion = 0;
+let score = 0;
+let timer = null;
+let currentTime = timerValue; // tiempo actual en segundos
+let gameData = []; // Aquí se guardarán las preguntas (del CSV o Excel)
+let currentMusic = null;
+let gameHistory = []; // Array para almacenar historial de preguntas
 
-        musMenu.volume = 0.2 * (soundSetting.music / 100);
+// --- Elementos del DOM ---
+let screens = {
+    loading: document.getElementById('Screen_Loading'),
+    title: document.getElementById('Screen_Title'),
+    ingame: document.getElementById('Screen_InGame'),
+    result: document.getElementById('Screen_Result'),
+};
 
-        rangeSound.value = soundSetting.sound
-        rangeMusic.value = soundSetting.music
-    } else {
-        console.log("No había configuración guardada, usando valores por defecto.");
+let gameElements = {
+    questionText: document.getElementById('Game_Question'),
+    timeText: document.getElementById('Game_Time'),
+    videoFrame: document.getElementById('Video_iframe'),
+    videoName: document.getElementById('Video_Name'),
+    optionGame: document.getElementById('Game_Option'),
+    optionList: document.getElementById('GameOption_List'),
+    manualGame: document.getElementById('Game_Manual'),
+    manualInput: document.getElementById('GameManual_Answer'),
+    manualList: document.getElementById('GameManual_List'),
+    manualSuggestions: document.getElementById('GameManual_Suggestion'),
+    manualSubmit: document.getElementById('GameManual_Submit'),
+    answerSection: document.getElementById('Game_Answer'),
+    resultScore: document.getElementById('Result_Score'),
+};
+
+const configElements = {
+    roundsInput: document.getElementById('roundsInput'),
+    infiniteRoundsBtn: document.getElementById('infiniteRoundsBtn'),
+    timerRange: document.getElementById('timerRange'),
+    timerValue: document.getElementById('timerValue'),
+    musicNameBtn: document.getElementById('musicNameBtn'),
+    excelFileInput: document.getElementById('excel-file'),
+    btnLoadExcel: document.getElementById('btnLoadExcel')
+};
+
+//#region Sonidos y música
+
+const soundUI = {
+    btnMusic: document.getElementById('btnSettingMusic'),
+    btnSound: document.getElementById('btnSettingSound'),
+    musicSettings: document.getElementById('musicSettings'),
+    soundSettings: document.getElementById('soundSettings'),
+    rangeMusic: document.getElementById('rangeMusic'),
+    rangeSound: document.getElementById('rangeSound')
+};
+
+// Cargar volúmenes guardados
+window.addEventListener('DOMContentLoaded', () => {
+    const savedSoundVolume = localStorage.getItem('soundVolume');
+    if (savedSoundVolume !== null) {
+        soundUI.rangeSound.value = savedSoundVolume;
     }
+
+    const savedMusicVolume = localStorage.getItem('musicVolume');
+    if (savedMusicVolume !== null) {
+        rangeMusic.value = savedMusicVolume;
+    }
+
+    // Aplicar los valores cargados
+    const userSoundVolume = parseInt(soundUI.rangeSound.value) / 100;
+    Object.values(sounds).forEach(audio => {
+        const baseVolume = parseFloat(audio.dataset.baseVolume);
+        audio.volume = baseVolume * userSoundVolume;
+    });
+
+    musicVolume = parseInt(rangeMusic.value) / 100;
+    musMenu.volume = musicVolume * 0.2;
 });
 
-function playSound(fileName, fileVolume=1.0) {
-    const audio = new Audio('snd/' + fileName);
-    audio.volume = fileVolume * (soundSetting.sound / 100);
 
-    audio.play().catch(error => {
-        console.error("Error al reproducir el sonido:", error);
-    });
+// Función auxiliar para mostrar solo un slider
+function toggleSlider(type) {
+    if (type === 'music') {
+        if (soundUI.musicSettings.style.display == 'none') {
+            soundUI.musicSettings.style.display = 'block';
+            soundUI.soundSettings.style.display = 'none';
+        } else {
+            soundUI.musicSettings.style.display = 'none';
+        }
+    } else if (type === 'sound') {
+        if (soundUI.soundSettings.style.display == 'none') {
+            soundUI.soundSettings.style.display = 'block';
+            soundUI.musicSettings.style.display = 'none';
+        } else {
+            soundUI.soundSettings.style.display = 'none';
+        }
+    }
+    playSound('Select.wav');
 }
 
-// Crear el audio de fondo
+soundUI.btnMusic.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSlider('music');
+});
+
+soundUI.btnSound.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSlider('sound');
+});
+
+// -- Sonidos --
+let sounds = {};
+loadSounds();
+
+function loadSounds() {
+    const soundFiles = [
+        { file: "Click.wav", baseVolume: 0.4 },
+        { file: "Select.wav", baseVolume: 0.6 },
+        { file: "Clock.wav", baseVolume: 0.4 },
+    ];
+
+    soundFiles.forEach(({ file, baseVolume }) => {
+        const audio = new Audio(`snd/${file}`);
+        audio.volume = baseVolume * (parseInt(soundUI.rangeSound.value) / 100); // volumen inicial ajustado al control
+        audio.dataset.baseVolume = baseVolume; // guardamos el volumen base
+        sounds[file] = audio;
+    });
+
+    console.log("Sonidos cargados:", Object.keys(sounds));
+}
+
+function playSound(name) {
+    if (!sounds[name]) {
+        console.warn(`El sonido "${name}" no está cargado.`);
+        return;
+    }
+
+    // Clonar el audio para permitir reproducir múltiples veces
+    const soundClone = sounds[name].cloneNode();
+
+    // Tomar el volumen base del dataset
+    const baseVolume = parseFloat(sounds[name].dataset.baseVolume) || 1.0;
+
+    // Ajustar según el slider de usuario
+    soundClone.volume = baseVolume * (parseInt(rangeSound.value) / 100);
+
+    soundClone.play();
+}
+
+// Sonido
+soundUI.rangeSound.addEventListener('input', () => {
+    const userVolume = parseInt(soundUI.rangeSound.value) / 100;
+
+    Object.values(sounds).forEach(audio => {
+        const baseVolume = parseFloat(audio.dataset.baseVolume);
+        audio.volume = baseVolume * userVolume;
+    });
+
+    localStorage.setItem('soundVolume', soundUI.rangeSound.value);
+});
+
+// -- Musica --
 const musMenu = new Audio('snd/Menu.mp3');
 musMenu.loop = true; // Activar el loop
-musMenu.volume = 0.2; // (Opcional) Ajustar volumen entre 0.0 y 1.0
+
+// Valor inicial del volumen
+let musicVolume = parseInt(rangeMusic.value) / 100;
+musMenu.volume = musicVolume * 0.2;
 
 function playMusic() {
     musMenu.play().catch(error => {
@@ -52,646 +187,574 @@ function stopMusic() {
     musMenu.currentTime = 0; // Reiniciar desde el principio si la quieres volver a tocar luego
 }
 
-function print(_text) {
-    console.log(_text);
-}
+// Evento para ajustar volumen con el slider
+rangeMusic.addEventListener('input', () => {
+    musicVolume = parseInt(rangeMusic.value) / 100;
+    musMenu.volume = musicVolume * 0.2;
 
-// #endregion
-
-// #region Loading Screen
-
-// Lista de IDs de pantallas
-const screens = [
-  "Screen_Loading",
-  "Screen_Title",
-  "Screen_InGame",
-  "Screen_Result"
-];
-
-showScreen("Screen_Loading");
-
-// Botón que abre el input file
-const btnLoadCSV = document.getElementById("btnLoadCSV");
-btnLoadCSV.addEventListener("click", () => {
-  loadCSV('FMQ.csv'); 
-  playSound('Select.wav');
+    localStorage.setItem('musicVolume', rangeMusic.value);
 });
 
-let quizData = [];
+//#endregion
 
-// Función para cargar el CSV automáticamente
-function loadCSV(ruta) {
-// Añadimos un parámetro único para evitar caché
-    const url = ruta + '?v=' + new Date().getTime();
-    fetch(url)
-        .then(response => {
-        if (!response.ok) throw new Error('No se pudo cargar el CSV');
-        return response.text();
-    })
-    .then(texto => {
-        // PapaParse maneja comas, comillas, saltos de línea, etc.
-        const resultado = Papa.parse(texto, {
-            header: false,   // si tu CSV no tiene encabezados
-            skipEmptyLines: true
-        });
+// --- Configuración cargada ---
+let customExcelData = null;
 
-        const filas = resultado.data;//texto.trim().split('\n').map(f => f.split(','));
+function showScreen(screenId) {
+    // Seleccionamos todos los elementos que tengan id que empiece con "Screen_"
+    const screens = document.querySelectorAll('[id^="Screen_"]');
 
-        // Si tu CSV tiene encabezados o filas de descripción, ajusta esto:
-        const rawData = filas.slice(3); // igual que antes: omite las 3 primeras filas
+    // Ocultamos todas
+    screens.forEach(screen => {
+        screen.style.display = "none";
+    });
 
-        quizData = rawData.reduce((acc, row) => {
-            if (row[0] && row[1] && row[2] && row[3]) {
-                acc.push({
-                    youtube: row[0] || "",
-                    fangames: (row[1] || "").split(';').map(f => f.trim()),
-                    music: row[2] || "",
-                    author: row[3] || ""
+    // Mostramos solo la deseada
+    const screenToShow = document.getElementById(screenId);
+    if (screenToShow) {
+        screenToShow.style.display = "block";
+    } else {
+        console.warn(`Pantalla con id "${screenId}" no encontrada.`);
+    }
+}
+
+showScreen('Screen_Loading');
+
+//#endregion
+
+//#region Loading Screen
+
+btnLoadCSV.addEventListener('click', () => {
+    playSound('Select.wav');
+    Papa.parse("FMQ.csv", {
+        download: true,       // Descarga directa desde la ruta del proyecto
+        header: false,        // No necesitamos encabezados, empezamos desde fila 4
+        skipEmptyLines: true, // Ignora filas vacías
+        complete: function(results) {
+            const rawData = results.data;
+            gameData = [];
+
+            // Recorremos desde la fila 4 (índice 3)
+            for (let i = 3; i < rawData.length; i++) {
+                const row = rawData[i];
+
+                // Ignorar filas con columnas vacías
+                if (!row[0] || !row[1] || !row[2] || !row[3]) continue;
+
+                const fangamesArray = row[1].split(';').map(f => f.trim());
+
+                gameData.push({
+                    youtube: row[0].trim(),
+                    fangames: fangamesArray,
+                    musicName: row[2].trim(),
+                    author: row[3].trim()
                 });
-            } else {
-                console.log("Fila ignorada por columna vacía:", row);
             }
-            return acc;
-        }, []);
 
-        console.log("Preguntas cargadas:", quizData);
+            console.log("CSV cargado correctamente:", gameData);
+            playMusic();
 
-        playMusic();
-        showScreen("Screen_Title");
-    })
-    .catch(error => {
-      console.error(error);
-      alert("Error al cargar el archivo CSV.");
+            // Pasamos a la pantalla del título
+            showScreen('Screen_Title');
+        },
+        error: function(err) {
+            alert("Error al cargar el CSV: " + err.message);
+        }
     });
-}
-
-//Configuracion del volumen
-let soundSetting = {
-    sound: 100,
-    music: 100
-}
-
-const btnSettingMusic = document.getElementById("btnSettingMusic");
-const btnSettingSound = document.getElementById("btnSettingSound");
-const musicSettings = document.getElementById("musicSettings");
-const soundSettings = document.getElementById("soundSettings");
-const rangeMusic = document.getElementById("rangeMusic");
-const rangeSound = document.getElementById("rangeSound");
-
-// Función para actualizar el volumen de música
-rangeMusic.addEventListener("input", function() {
-    soundSetting.music = rangeMusic.value;
-    console.log("Music Volume:", soundSetting.music);
-    musMenu.volume = 0.2 * (soundSetting.music / 100);
-
-    localStorage.setItem("soundSetting", JSON.stringify(soundSetting));
-    console.log("Configuración guardada:", soundSetting);
 });
 
-// Función para actualizar el volumen de sonido
-rangeSound.addEventListener("input", function() {
-    soundSetting.sound = rangeSound.value;
-    console.log("Sound Volume:", soundSetting.sound);
+//#endregion
 
-    localStorage.setItem("soundSetting", JSON.stringify(soundSetting));
-    console.log("Configuración guardada:", soundSetting);
-});
+//#region Title Screen
 
-// Función para alternar la visibilidad de los controles
-btnSettingMusic.addEventListener("click", function() {
-    if (musicSettings.style.display === "none") {
-        musicSettings.style.display = "flex";
-        soundSettings.style.display = "none"; // Ocultar el control de sonido
-    } else {
-        musicSettings.style.display = "none";
+configElements.roundsInput.addEventListener('input', () => {
+    const roundRange = configElements.roundsInput;
+    const min = parseInt(roundRange.min);
+    const valor = parseInt(roundRange.value);
+
+    if (isNaN(valor)){
+        roundRange.value = 1;
+        return;
     }
+    
+    if (valor < min) roundRange.value = min;
+});
 
+configElements.infiniteRoundsBtn.addEventListener('click', () => {
+    infiniteMode = !infiniteMode;
+    playSound('Select.wav');
+
+    if (infiniteMode) {
+        totalQuestions = configElements.roundsInput.value;
+        configElements.roundsInput.disabled = true;
+        configElements.roundsInput.type = "text";
+        configElements.roundsInput.value = "Infinite";
+    } else {
+        configElements.roundsInput.type = "number";
+        configElements.roundsInput.value = totalQuestions; // volver a valor por defecto
+        configElements.roundsInput.disabled = false;
+    }
+});
+
+configElements.timerRange.addEventListener('input', () => {
+    timerValue = parseInt(configElements.timerRange.value);
+    configElements.timerValue.textContent = timerValue;
+});
+
+configElements.musicNameBtn.addEventListener('click', () => {
+    showSongName = !showSongName;
+    configElements.musicNameBtn.textContent = `Show Song Name: ${showSongName ? "On" : "Off"}`;
     playSound('Select.wav');
 });
 
-btnSettingSound.addEventListener("click", function() {
-    if (soundSettings.style.display === "none") {
-        soundSettings.style.display = "flex";
-        musicSettings.style.display = "none"; // Ocultar el control de música
-    } else {
-        soundSettings.style.display = "none";
-    }
-
+configElements.btnLoadExcel.addEventListener('click', () => {
+    configElements.excelFileInput.click(); // abrir selector de archivos
     playSound('Select.wav');
 });
 
+configElements.excelFileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-function print(_text) {
-    console.log(_text);
-}
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
 
-// #endregion
+        // Asumimos que los datos importantes están en la primera hoja
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false });
 
-// #region Title Screen
+        // Limpiar el CSV anterior
+        gameData = [];
 
-let totalQuestions, timePerQuestion;
-//let totalQuestions = 20;
-//let timePerQuestion = 50.0; // segundos
-let currentQuestionIndex = 0;
-let currentTimer;
-let timeLeft = timePerQuestion;
+        // Procesar filas desde la fila 4 (index 3)
+        for (let i = 3; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (!row || row.length < 4) continue; // ignorar filas incompletas
 
-// Cargar preguntas aleatorias desde quizData
-function prepareQuestions() {
-  const shuffled = [...quizData].sort(() => Math.random() - 0.5);
-  return gameConfig.infiniteRounds ? shuffled : shuffled.slice(0, totalQuestions);
+            const [youtube, fangamesRaw, musicName, author] = row;
+            if (!youtube || !fangamesRaw || !musicName || !author) continue;
 
-  //return shuffled.slice(0, totalQuestions);
-}
+            const fangames = fangamesRaw.split(';').map(f => f.trim());
 
-let modeGame = "Option"; // "Option" o "Manual"
+            gameData.push({
+                youtube,
+                fangames,
+                musicName,
+                author
+            });
+        }
 
-// Iniciar el modo de opciones
+        console.log("Excel cargado:", gameData);
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+
+//#endregion
+
+//#region InGame Screen
+
+//#region Option Mode
 function startOptionMode() {
-    //questionList = prepareQuestions();
-    //currentQuestionIndex = 0;
-    modeGame = "Option";
-    totalQuestions = gameConfig.infiniteRounds ? Infinity : gameConfig.rounds;
-    timePerQuestion = gameConfig.timer;
-    questionList = prepareQuestions();
-    currentQuestionIndex = 0;
-
-    const soundDiv = document.getElementById("Sound_Setting");
-    soundDiv.style.display = "none";
-    
+    gameMode = "Option";
+    totalQuestions = configElements.roundsInput.value;
+    currentQuestion = 1;
+    score = 0;
+    showScreen('Screen_InGame');
     playSound('Select.wav');
     stopMusic();
-    showScreen("Screen_InGame");
-    showQuestion();
+
+    // Mostrar la sección de Manual Mode y ocultar opciones
+    gameElements.optionGame.style.display = "block";
+    gameElements.manualGame.style.display = "none";
+
+    showOptionQuestion();
 }
 
-// Iniciar modo manual
-function startManualMode() {
-    modeGame = "Manual";
-    totalQuestions = gameConfig.infiniteRounds ? Infinity : gameConfig.rounds;
-    timePerQuestion = gameConfig.timer;
-    questionList = prepareQuestions();
-    currentQuestionIndex = 0;
-
-    const soundDiv = document.getElementById("Sound_Setting");
-    soundDiv.style.display = "none";
-
-    playSound('Select.wav');
-    stopMusic();
-    showScreen("Screen_InGame");
-    showQuestion();
-}
-
-// Estado de configuración
-const gameConfig = {
-  rounds: 20,
-  infiniteRounds: false,
-  timer: 50,
-  musicName: false
-};
-
-// Evento para número de rondas
-document.getElementById('roundsInput').addEventListener('input', (e) => {
-  const val = parseInt(e.target.value);
-  gameConfig.rounds = Math.max(1, val || 1);
-});
-
-// Botón de rondas infinitas
-document.getElementById('infiniteRoundsBtn').addEventListener('click', () => {
-    gameConfig.infiniteRounds = !gameConfig.infiniteRounds;
-    playSound('Select.wav');
-
-    const input = document.getElementById('roundsInput');
-    const status = document.getElementById('infiniteRoundsStatus');
-
-    if (gameConfig.infiniteRounds) {
-        input.disabled = true;
-        status.textContent = "Infinite";
-    } else {
-        input.disabled = false;
-        status.textContent = "Limited";
-    }
-});
-
-// Slider de temporizador
-document.getElementById('timerRange').addEventListener('input', (e) => {
-    const val = parseInt(e.target.value);
-    gameConfig.timer = val;
-    document.getElementById('timerValue').textContent = val;
-});
-
-document.getElementById('musicNameBtn').addEventListener('click', () => {
-    gameConfig.musicName = !gameConfig.musicName;
-    playSound('Select.wav');
-
-    document.getElementById('musicNameBtn').textContent = gameConfig.musicName ? "Show Song Name: On" : "Show Song Name: Off";
-});
-
-/*const btnLoadExcel = document.getElementById("btnLoadExcel");
-const inputExcel   = document.getElementById("excel-file");
-
-// Botón que abre el input file
-btnLoadExcel.addEventListener("click", () => {
-  inputExcel.click();
-  playSound('Select.wav');
-});
-
-inputExcel.addEventListener("change", (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    quizData = [];
-
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: "array" });
-
-    // Tomamos la primera hoja del Excel
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    // Convertimos toda la hoja a JSON (con encabezados generados por defecto)
-    let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    rawData = rawData.slice(3); // Si quieres excluir las primeras filas (cabeceras u otros datos)
-
-    quizData = rawData.reduce((acc, row) => {
-      // Si alguna de las columnas de la fila está vacía, no agregamos esa fila a los datos
-      if (row[0] && row[1] && row[2] && row[3]) {
-        acc.push({
-          youtube: row[0] || "",
-          fangames: (row[1] || "").split(";").map(f => f.trim()), // <-- array de fangames
-          music: row[2] || "",
-          author: row[3] || ""
-        });
-      } else {
-        console.log("Fila ignorada por columna vacía:", row);
-      }
-      return acc;
-    }, []);
-
-    console.log("Preguntas cargadas:", quizData);
-    console.log("Archivo cargado:", workbook.SheetNames);
-
-    playMusic();
-    showScreen("Screen_Title");
-  };
-  reader.readAsArrayBuffer(file);
-});*/
-
-// #endregion
-
-// #region InGame Screen
-
-// Mostrar una pregunta
-function showQuestion() {
-    const q = questionList[currentQuestionIndex];
-
-    // Mostrar número de pregunta
-    document.getElementById("Game_Question").textContent = 
-        `Question ${currentQuestionIndex + 1} - ${totalQuestions}`;
-
-    // Resetear tiempo
-    timeLeft = timePerQuestion;
-    updateTimer();
-    if (currentTimer) clearInterval(currentTimer);
-    currentTimer = setInterval(updateTimer, 100);
-
-    // Poner video de YouTube
-    const videoUrl = extractYoutubeEmbed(q.youtube);
-    document.getElementById("Video_iframe").src = videoUrl;
-
-    const videoName = document.getElementById("Video_Name");
-    if (gameConfig.musicName){
-        videoName.textContent = `${q.music}`;
-        videoName.style.display = "block";
-    } else {
-        videoName.style.display = "none";
-    }
-
-    if (modeGame === "Option") {
-        // Mostrar opciones
-        const optionList = document.getElementById("GameOption_List");
-        optionList.style.display = "flex";
-
-        // Generar opciones
-        const options = generateOptions(q.fangames);
-        renderOptions(options, q.fangames);
-
-        // Ocultar manual
-        document.getElementById("Game_Manual").style.display = "none";
-    } else {
-        // Mostrar input manual
-        const manualDiv = document.getElementById("Game_Manual");
-        manualDiv.style.display = "block";
-        document.getElementById("GameManual_Answer").value = "";
-        document.getElementById("GameManual_Answer").focus();
-
-        // Ocultar opciones
-        document.getElementById("Game_Option").style.display = "none";
-    }
-}
-
-// Actualizar el temporizador
-let lastSecond = null; // variable global para controlar el sonido
-function updateTimer() {
-    timeLeft -= 0.1;
-
-    // Sonido de countdown en los últimos 10 segundos
-    const currentSecond = Math.ceil(timeLeft); // número entero del segundo actual
-    if (timeLeft <= 10  && timeLeft > 0 && currentSecond !== lastSecond) {
-        playSound('Clock.wav',0.5);
-        lastSecond = currentSecond;
-    }
-
-    if (timeLeft <= 0) {
-        clearInterval(currentTimer);
-        timeLeft = 0;
-        document.getElementById("Game_Time").textContent = `Time: 0.0`;
-
-        // Llamar a la función para mostrar respuesta como no respondida
-        handleTimeUp();
-    } else {
-        document.getElementById("Game_Time").textContent = `Time: ${timeLeft.toFixed(1)}`;
-    }
-}
-
-function handleTimeUp() {
-    const q = questionList[currentQuestionIndex];
-
-    // Guardar resultado como no respondida
-    results.push({
-        question: q.music,
-        fangameCorrect: q.fangames.join("; "),
-        selectedAnswer: "", // vacío
-        isCorrect: false
-    });
-
-    // Mostrar div de respuesta
-    const answerDiv = document.getElementById("Game_Answer");
-    const answerText = document.getElementById("Answer_Text");
-    const answerInfo = document.getElementById("Answer_Info");
-
-    answerText.textContent = "⏱ Time's up!";
-    answerInfo.innerHTML = `
-        Fangame: ${q.fangames.join("; ").replace(/;/g, ",")} <br>
-        Music: ${q.music} <br>
-        Author: ${q.author}
-    `;
-
-    answerDiv.style.display = "block";
-
-    // Ocultar opciones
-    const optionList = document.getElementById("Game_Option");
-    optionList.style.display = "none";
-
-    const manualList = document.getElementById("Game_Manual");
-    manualList.style.display = "none";
-
-    // Scroll al div de respuesta
-    answerDiv.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    // Deshabilitar botones de opciones
-    const optionButtons = optionList.querySelectorAll("button");
-    optionButtons.forEach(btn => btn.disabled = true);
-}
-
-function generateOptions(fangamesArray) {
-    const correct = fangamesArray[Math.floor(Math.random() * fangamesArray.length)];
-
-    let others = quizData.flatMap(q => q.fangames)
-                         .filter(f => f !== correct);
-    others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 4);
-
-    return [correct, ...others].sort(() => Math.random() - 0.5);
-}
-
-// Renderizar botones de opciones
-function renderOptions(options, correctAnswer) {
-    const list = document.getElementById("GameOption_List");
-    list.innerHTML = "";
-
-    options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.onclick = () => checkAnswer(opt, correctAnswer);
-        list.appendChild(btn);
-    });
-}
-
-// Revisar respuesta
-function checkAnswer(selected = null, correctFangames = null) {
-    clearInterval(currentTimer);
-    
-    const q = questionList[currentQuestionIndex];
-    print(q);
-    //const isCorrect = correctFangames.includes(selected); // ✅ acepta cualquiera de los posibles
-
-    let isCorrect = false;
-    let userAnswer = selected;
-    if (modeGame === "Option") {
-        // ✅ Validación por opciones (ya estaba)
-        isCorrect = correctFangames.includes(selected);
-    } else {
-        // ✅ Modo manual
-        selected = document.getElementById("GameManual_Answer").value.trim();
-        userAnswer = document.getElementById("GameManual_Answer").value.trim();
-        isCorrect = q.fangames.some(f => f.toLowerCase() === userAnswer.toLowerCase());
-    }
-
-    // Guardar resultado
-    results.push({
-        question: q.music,
-        fangameCorrect: q.fangames.join("; "),//correctFangames.join("; "),
-        selectedAnswer: selected,
-        isCorrect: isCorrect
-    });
-
-    // Ocultar input/manual o lista de opciones
-    if (modeGame === "Option") {
-        document.getElementById("Game_Option").style.display = "none";
-    } else {
-        document.getElementById("Game_Manual").style.display = "none";
-    }
-
-    // Mostrar div de respuesta
-    const answerDiv = document.getElementById("Game_Answer");
-    const answerText = document.getElementById("Answer_Text");
-    const answerInfo = document.getElementById("Answer_Info");
-
-    // Tomamos la pregunta actual
-    answerText.textContent = isCorrect ? "✅ Correct!" : "❌ Wrong!";
-    answerInfo.innerHTML = `
-        Fangame: ${q.fangames.join("; ").replace(/;/g, ",")} <br>
-        Music: ${q.music} <br>
-        Author: ${q.author}
-    `;
-
-    answerDiv.style.display = "block";
-
-    // Hacer scroll hacia el div de respuesta
-    answerDiv.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-document.getElementById("btnContinue").onclick = () => {
-    const answerDiv = document.getElementById("Game_Answer");
-    answerDiv.style.display = "none";
-
-    const optionList = document.getElementById("Game_Option");
-    optionList.style.display = "block";
-
-    const optionButtons = optionList.querySelectorAll("button");
-    optionButtons.forEach(btn => btn.disabled = false);
-
-    playSound('Select.wav');
-
-    // Pasar a la siguiente pregunta
-    nextQuestion();
-};
-
-document.getElementById("btnExit").onclick = () => {
-    if (currentTimer) clearInterval(currentTimer);
-    
-    const answerDiv = document.getElementById("Game_Answer");
-    answerDiv.style.display = "none";
-    
-    const optionList = document.getElementById("Game_Option");
-    optionList.style.display = "block";
-
-    const optionButtons = optionList.querySelectorAll("button");
-    optionButtons.forEach(btn => btn.disabled = false);
-
-    // Mostrar pantalla de resultados
-    showResults();
-    playSound('Select.wav');
-};
-
-// Obtener referencias
-const manualInput = document.getElementById("GameManual_Answer");
-const suggestionDiv = document.getElementById("GameManual_Suggestion");
-
-// Escuchar input
-manualInput.addEventListener("input", () => {
-    const query = manualInput.value.trim().toLowerCase();
-    suggestionDiv.innerHTML = "";
-
-    if (!query){
-        suggestionDiv.style.display = "none"; // ocultar si no hay texto
-        return; // si no hay texto, no mostrar sugerencias
-    }
-
-    // Obtener todos los fangames únicos de quizData
-    const allFangames = [...new Set(quizData.flatMap(q => q.fangames))];
-
-    // Filtrar por coincidencia parcial
-    const matches = allFangames.filter(f => f.toLowerCase().includes(query)).slice(0, 8);
-
-    if (matches.length === 0) {
-        suggestionDiv.style.display = "none"; // ocultar si no hay coincidencias
+function showOptionQuestion() {
+    if (currentQuestion > totalQuestions && !infiniteMode) {
+        showResults();
         return;
     }
 
-    suggestionDiv.style.display = "block"; // mostrar sugerencias
+    // Elegir canción correcta
+    const correctIndex = Math.floor(Math.random() * gameData.length);
+    currentMusic = gameData[correctIndex];
 
-    // Mostrar resultados
-    matches.forEach(f => {
-        const div = document.createElement("div");
-        div.textContent = f;
-        div.classList.add("suggestion-item");
-        div.addEventListener("click", () => {
-            manualInput.value = f;       // completar input
-            suggestionDiv.innerHTML = ""; // limpiar sugerencias
-            manualInput.focus();         // volver a foco
+    startTimer();
+    showQuestion();
+
+    const correctFangame = currentMusic.fangames[Math.floor(Math.random() * currentMusic.fangames.length)];
+    const validFangamesSet = new Set(currentMusic.fangames.map(f => f.trim().toLowerCase()));
+
+    // Generar opciones (1 correcta + 4 incorrectas)
+    const options = [correctFangame];
+
+    while (options.length < 5) {
+        const randomIndex = Math.floor(Math.random() * gameData.length);
+        const randomMusic = gameData[randomIndex];
+        const randomFangame = randomMusic.fangames[Math.floor(Math.random() * randomMusic.fangames.length)];
+
+        // Evitar duplicados y fangames de la misma canción
+        if (
+            !options.some(opt => opt.toLowerCase() === randomFangame.toLowerCase()) &&
+            !validFangamesSet.has(randomFangame.toLowerCase())
+        ) {
+            options.push(randomFangame);
+        }
+    }
+
+    // Mezclar y mostrar
+    options.sort(() => Math.random() - 0.5);
+    gameElements.optionList.innerHTML = "";
+
+    options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.textContent = option;
+        btn.addEventListener("click", () => {
+            const allButtons = gameElements.optionList.querySelectorAll("button");
+            allButtons.forEach(b => b.disabled = true);
+
+            checkAnswer(option);
         });
-        suggestionDiv.appendChild(div);
+        gameElements.optionList.appendChild(btn);
+    });
+}
+//#endregion
+
+//#region Manual Mode
+function startManualMode() {
+    currentQuestion = 1;
+    totalQuestions = configElements.roundsInput.value;
+    score = 0;
+    gameMode = "Manual";
+    showScreen('Screen_InGame');
+    playSound('Select.wav');
+    stopMusic();
+
+    // Mostrar la sección de Manual Mode y ocultar opciones
+    gameElements.optionGame.style.display = "none";
+    gameElements.manualGame.style.display = "block";
+
+    showManualQuestion();
+}
+
+function showManualQuestion() {
+    if (currentQuestion > totalQuestions && !infiniteMode) {
+        showResults();
+        return;
+    }
+
+    gameElements.manualInput.style.border = "3px solid white";
+    gameElements.manualSubmit.style.border = "3px solid white";
+    gameElements.manualSubmit.style.pointerEvents = 'auto';
+
+    gameElements.manualInput.innerHTML = "";
+    gameElements.manualInput.disabled = false;
+    gameElements.manualSubmit.disabled = false;
+
+    // Elegir canción correcta
+    const correctIndex = Math.floor(Math.random() * gameData.length);
+    currentMusic = gameData[correctIndex];
+
+    showQuestion(); // carga video y contador
+    startTimer();   // inicia el temporizador
+
+    // Limpiar input y sugerencias
+    gameElements.manualInput.value = "";
+    gameElements.manualSuggestions.innerHTML = "";
+    gameElements.manualInput.style.color = "white";
+    gameElements.manualInput.style.textShadow = "0px 0px 5px #000000";
+}
+
+gameElements.manualInput.addEventListener('input', () => {
+    const input = gameElements.manualInput.value.toLowerCase();
+    const suggestions = [];
+
+    if (input == ""){
+        gameElements.manualSuggestions.innerHTML = "";
+        return;
+    }
+
+    // Buscar hasta 8 coincidencias
+    gameData.forEach(song => {
+        song.fangames.forEach(f => {
+            if (f.toLowerCase().includes(input) && !suggestions.includes(f)) {
+                suggestions.push(f);
+            }
+        });
+    });
+
+    // Limitar a 8 sugerencias
+    suggestions.splice(8);
+
+    // Mostrar en el div
+    gameElements.manualSuggestions.innerHTML = "";
+    suggestions.forEach(s => {
+        const div = document.createElement('div');
+        div.textContent = s;
+        div.classList.add("suggestion-item");
+        div.addEventListener('click', () => {
+            gameElements.manualInput.value = s; // poner la sugerencia en el input
+            gameElements.manualInput.focus();         // volver a foco
+            gameElements.manualSuggestions.innerHTML = ""; // limpiar sugerencias
+        });
+        gameElements.manualSuggestions.appendChild(div);
     });
 });
 
-// Evento para la tecla ENTER
-manualInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        suggestionDiv.style.display = "none";  // Ocultar las sugerencias al presionar Enter
-        checkAnswer();  // También puedes agregar la función de submit si es necesario
+// Botón Submit
+gameElements.manualSubmit.addEventListener('click', () => {
+    submitManualAnswer();
+});
+
+// Enter
+gameElements.manualInput.addEventListener('keydown', (e) => {
+    if (e.key === "Enter") {
+        submitManualAnswer();
     }
 });
 
-// Ir a la siguiente pregunta o terminar
-function nextQuestion() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < questionList.length) {
-        showQuestion();
+function submitManualAnswer() {
+    const answer = gameElements.manualInput.value.trim();
+
+    // Bloquear input y botón
+    gameElements.manualInput.disabled = true;
+    gameElements.manualSubmit.disabled = true;
+
+    // Limpiar sugerencias
+    gameElements.manualSuggestions.innerHTML = "";
+
+    checkAnswer(answer); // reutilizamos la función de Option Mode
+}
+//#endregion
+
+function startTimer() {
+    currentTime = timerValue; // reinicia el tiempo para cada pregunta
+    gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
+    let lastSecondPlayed = null;
+
+    // Limpiar cualquier timer previo
+    if (timer) clearInterval(timer);
+
+    timer = setInterval(() => {
+        currentTime -= 0.1; // bajar de a 0.1s
+        if (currentTime <= 0) {
+            clearInterval(timer);
+            gameElements.timeText.textContent = `Time: 0.0`;
+
+            if (gameMode == "Option"){
+                const allButtons = gameElements.optionList.querySelectorAll('button');
+                allButtons.forEach(b => b.disabled = true);
+            } else {
+                gameElements.manualInput.disabled = true;
+                gameElements.manualSubmit.disabled = true;
+
+                gameElements.manualSuggestions.innerHTML = "";
+            }
+
+            // Tiempo agotado, registrar respuesta vacía
+            checkAnswer(""); 
+        } else {
+            gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
+
+            const wholeSecond = Math.floor(currentTime);
+            if (wholeSecond < 10 && wholeSecond >= 0 && wholeSecond !== lastSecondPlayed) {
+                playSound("Clock.wav");
+                lastSecondPlayed = wholeSecond;
+            }
+        }
+    }, 100); // cada 100ms
+}
+
+// --- Funciones comunes ---
+function showQuestion() {
+    // Carga el video y actualiza contador de pregunta
+    const videoUrl = getEmbedURL(currentMusic.youtube);
+    gameElements.videoFrame.src = videoUrl;
+    gameElements.videoName.textContent = showSongName ? currentMusic.musicName : "";
+
+    if (!infiniteMode) {
+        gameElements.questionText.textContent = `Question ${currentQuestion} - ${totalQuestions}`;
     } else {
-        showResults();
+        gameElements.questionText.textContent = `Question ${currentQuestion} - Infinite`;
     }
 }
 
-// Extraer ID de YouTube desde link
-function extractYoutubeEmbed(url) {
+function checkAnswer(selectedFangame) {
+    // Detener timer si aún está corriendo
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
+    }
+    
+    // Comprobamos si el nombre del fangame seleccionado coincide con alguno de los correctos
+    const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
+
+    //const isCorrect = currentMusic.fangames.includes(selectedFangame);
+
+    // Guardar en historial
+    gameHistory.push({
+        questionNumber: currentQuestion,
+        musicName: currentMusic.musicName,
+        userAnswer: selectedFangame,
+        isCorrect: isCorrect,
+        correctFangames: [...currentMusic.fangames]
+    });
+
+    if (gameMode == "Option"){
+        const allButtons = gameElements.optionList.querySelectorAll("button");
+        allButtons.forEach(b => {
+            b.style.color = "gray"; // Poner gris a todos los botones
+            b.style.textShadow = "none"; // Quitar el text-shadow
+            b.style.pointerEvents = 'none';
+            b.style.border = "3px solid gray";
+        });
+
+        // Buscar el botón que fue presionado (seleccionado)
+        if (selectedFangame != ""){
+            const selectedButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
+            if (!isCorrect) {
+                selectedButton.style.color = "red"; // Opción incorrecta: rojo
+                selectedButton.style.textShadow = "0px 0px 5px #FF0000"; // Sombra roja
+            }
+        }
+        
+
+        // Marcar la opción correcta en verde
+        currentMusic.fangames.forEach(correctFangame => {
+            const correctButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === correctFangame.toLowerCase().trim());
+            if (correctButton) {
+                correctButton.style.color = "lime"; // Opción correcta: verde
+                correctButton.style.textShadow = "0px 0px 5px #00FF00"; // Sombra verde
+            }
+        });
+    }
+    else
+    {
+        gameElements.manualInput.style.border = "3px solid gray";
+        gameElements.manualSubmit.style.border = "3px solid gray";
+        gameElements.manualSubmit.style.pointerEvents = 'none';
+
+        gameElements.manualInput.style.color = isCorrect ? "lime" : "red";
+        gameElements.manualInput.style.textShadow = isCorrect ?
+                                                    "0px 0px 5px #00FF00" :
+                                                    "0px 0px 5px #FF0000"; // Sombra verde
+    }
+
+    // Mostrar div de respuesta
+    gameElements.answerSection.style.display = "block";
+    const answerText = document.getElementById('Answer_Text');
+    const answerInfo = document.getElementById('Answer_Info');
+
+    // Cambiar el color y el text-shadow según si la respuesta es correcta o incorrecta
+    if (isCorrect) {
+        answerText.style.color = "lime"; // color para respuestas correctas
+        answerText.style.textShadow = "0px 0px 5px #00FF00"; // text-shadow verde
+    } else {
+        answerText.style.color = "red"; // color para respuestas incorrectas
+        answerText.style.textShadow = "0px 0px 5px #FF0000"; // text-shadow rojo
+    }
+
+    answerText.textContent = `Your answer: ${selectedFangame} — ${isCorrect ? "Correct!" : "Wrong!"}`;
+    answerInfo.innerHTML = `
+        <p><strong>Correct Fangame(s):</strong> ${currentMusic.fangames.join(", ")}</p>
+        <p><strong>Music:</strong> ${currentMusic.musicName}</p>
+        <p><strong>Author:</strong> ${currentMusic.author}</p>
+    `;
+
+    // Hacer scroll hacia el div de respuesta
+    gameElements.answerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Actualizar puntuación si es correcta
+    if (isCorrect) score += 100 + Math.floor(currentTime * 2);
+
+    // El botón Continue manejará la siguiente pregunta, sin recargar opciones ni video
+    const btnContinue = document.getElementById('btnContinue');
+    btnContinue.onclick = () => {
+        gameElements.answerSection.style.display = "none";
+        currentQuestion++;
+        playSound('Select.wav');
+
+        if (gameMode == "Option")
+            { showOptionQuestion(); }
+        else
+            { showManualQuestion(); }
+    };
+
+    const btnExit = document.getElementById('btnExit');
+    btnExit.onclick = () => {
+        playSound('Select.wav');
+        showResults();
+    };
+}
+
+// Función para convertir un link normal de YouTube a embed
+function getEmbedURL(youtubeURL) {
     // Extraer ID del video
-    const idMatch = url.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
+    const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
     const videoId = idMatch ? idMatch[1] : null;
 
-    if (!videoId) return url; // fallback
+    if (!videoId) return youtubeURL; // fallback
 
     // Buscar parámetro t= en la URL
-    const tMatch = url.match(/[?&]t=(\d+)s?/);
+    const tMatch = youtubeURL.match(/[?&]t=(\d+)s?/);
     const startTime = tMatch ? parseInt(tMatch[1]) : 0;
 
     // Construir URL para iframe
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
 
-// #endregion
+//#endregion
 
-// #region Result Screen
-
-let questionList = [];
-let results = []; // historial de respuestas
+//#region Result Screen
 
 function showResults() {
-    showScreen("Screen_Result");
+    showScreen('Screen_Result'); // Mostrar la pantalla de resultados
     playMusic();
     document.getElementById("Video_iframe").src = "";
+    gameElements.answerSection.style.display = "none";
 
-    const resultList = document.getElementById("Result_List");
-    resultList.innerHTML = "";
+    gameElements.resultScore.textContent = `Your Score: ${score}`;
 
-    let correctCount = results.filter(r => r.isCorrect).length;
-    let incorrectCount = results.length - correctCount;
+    const resultList = document.getElementById('Result_List');
+    resultList.innerHTML = ""; // Limpiar lista antes de agregar
+
+    let correctCount = gameHistory.filter(r => r.isCorrect).length;
+    let incorrectCount = gameHistory.length - correctCount;
 
     const summary = document.createElement("div");
-    summary.innerHTML = `<h3>Correct: ${correctCount} / ${results.length}</h3>
-                        <h3>Incorrect: ${incorrectCount} / ${results.length}</h3>`;
+    summary.innerHTML = `<h3 style="color: lime; text-shadow: 2px 2px 5px rgba(144, 255, 144, 0.57);">Correct: ${correctCount} / ${gameHistory.length}</h3>
+                        <h3 style="color: red; text-shadow: 2px 2px 5px rgba(255, 144, 144, 0.57);">Incorrect: ${incorrectCount} / ${gameHistory.length}</h3>`;
     resultList.appendChild(summary);
 
-    // Lista detallada
-    results.forEach((r, i) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<strong>Q${i + 1} - ${r.question}</strong><br>
-                     Your answer: ${r.selectedAnswer} ${r.isCorrect ? "✅" : "❌"}<br>
-                     Correct answer: ${r.fangameCorrect.replace(/;/g, ",")}`;
-    div.style.marginBottom = "10px";
-    resultList.appendChild(div);
-  });
+    gameHistory.forEach(item => {
+        const div = document.createElement('div');
+        div.classList.add('result-item');
+
+        const blendText = item.isCorrect ? "rgba(202, 255, 202, 1)" : "rgba(255, 202, 202, 1)";
+        div.innerHTML = `
+            <p style="color: ${blendText}"><strong>Question ${item.questionNumber}: ${item.musicName}</strong></p>
+            <p style="color: ${blendText}">Your answer: ${item.userAnswer} ${item.isCorrect ? "✔️" : "❌"}</p>
+            <p style="color: ${blendText}">Correct Answer: ${item.correctFangames.join(", ")}</p>
+        `;
+
+        resultList.appendChild(div);
+    });
+
+    screen.result.scrollIntoView({ behavior: "instant", block: "start" });
 }
 
-// Botón Back para reiniciar
-document.getElementById("btnBackMenu").onclick = () => {
-    results = [];
-
-    const soundDiv = document.getElementById("Sound_Setting");
-    soundDiv.style.display = "block";
-
+const btnBackMenu = document.getElementById('btnBackMenu');
+btnBackMenu.onclick = () => {
+    gameHistory = []; // Limpiar historial
+    score = 0;
+    currentQuestion = 1;
     playSound('Select.wav');
-    showScreen("Screen_Title");
+    showScreen('Screen_Title');
 };
 
-document.getElementById("btnOptionMode").addEventListener('mouseenter', () => {
-    playSound('Click.wav',0.2);
-});
-
-document.getElementById("btnManualMode").addEventListener('mouseenter', () => {
-    playSound('Click.wav',0.2);
-});
-
-// #endregion
+//#endregion
