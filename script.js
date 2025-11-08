@@ -278,6 +278,7 @@ configElements.roundsInput.addEventListener('input', () => {
     }
     
     if (valor < min) roundRange.value = min;
+    roundRange.value = Math.floor(roundRange.value);
 });
 
 configElements.infiniteRoundsBtn.addEventListener('click', () => {
