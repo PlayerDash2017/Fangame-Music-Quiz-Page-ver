@@ -235,6 +235,84 @@ input[type="text"] {
     display: block;  /* Asegura que se comporte como un bloque */
 }
 
+/* Reportes */
+/* 📌 Contenedor general del botón de reportar */
+#Report_Box {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 99999;
+    text-align: left;
+}
+
+/* 📌 Botón principal: mismo estilo que tus botones arcade */
+#btnReport {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    padding: 8px 14px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: 3px solid white;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover igual que tus botones */
+#btnReport:hover {
+    background-color: white;
+    color: black;
+}
+
+/* 📌 Menú desplegable */
+#Report_Menu {
+    margin-top: 10px;
+    width: 220px;
+    padding: 12px;
+    border: 3px solid white;
+    background-color: rgba(0, 0, 0, 0.75);
+
+    text-align: left;
+    box-shadow: 0px 0px 10px #00ff88;
+}
+
+#Report_Menu h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    text-shadow: 0px 0px 5px #00ff88;
+}
+
+/* Select adaptado al estilo arcade */
+#Report_Reason {
+    width: 100%;
+    padding: 6px;
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+/* Botón de enviar dentro del menú */
+#Report_Send {
+    margin-top: 10px;
+    width: 90%;
+    font-size: 16px;
+    padding: 8px;
+    border: 3px solid white;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+}
+
+#Report_Send:hover {
+    background-color: white;
+    color: black;
+}
+
+.Report_Hidden {
+    display: none;
+}
+
 /* Fondo de partículas */
 #tsparticles {
     position: absolute;

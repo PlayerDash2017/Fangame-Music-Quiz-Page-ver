@@ -17,6 +17,9 @@ let currentTime = timerValue; // tiempo actual en segundos
 let gameData = []; // Aquí se guardarán las preguntas (del CSV o Excel)
 let currentMusic = null;
 let gameHistory = []; // Array para almacenar historial de preguntas
+let usedQuestions = new Set();
+let reportIndex = 0;
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
 
 // --- Elementos del DOM ---
 let screens = {
@@ -40,6 +43,9 @@ let gameElements = {
     manualSubmit: document.getElementById('GameManual_Submit'),
     answerSection: document.getElementById('Game_Answer'),
     resultScore: document.getElementById('Result_Score'),
+    reportReason: document.getElementById("Report_Reason"),
+    reportMenu: document.getElementById("Report_Menu"),
+    reportSend: document.getElementById("Report_Send"),
 };
 
 const configElements = {
@@ -244,6 +250,7 @@ btnLoadCSV.addEventListener('click', () => {
                 const fangamesArray = row[1].split(';').map(f => f.trim());
 
                 gameData.push({
+                    index: i-3,
                     youtube: row[0].trim(),
                     fangames: fangamesArray,
                     musicName: row[2].trim(),
@@ -309,49 +316,84 @@ configElements.musicNameBtn.addEventListener('click', () => {
 });
 
 configElements.btnLoadExcel.addEventListener('click', () => {
-    configElements.excelFileInput.click(); // abrir selector de archivos
+    if (!configElements.excelFileInput) {
+        console.error("excelFileInput no está definido");
+        return;
+    }
+
+    configElements.excelFileInput.click();
     playSound('Select.wav');
 });
 
 configElements.excelFileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files?.[0];
+    if (!file) {
+        console.warn("No se seleccionó archivo");
+        return;
+    }
 
     const reader = new FileReader();
+
     reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        try {
+            const data = new Uint8Array(e.target.result);
 
-        // Asumimos que los datos importantes están en la primera hoja
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false });
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        // Limpiar el CSV anterior
-        gameData = [];
+            if (!firstSheet) {
+                console.error("La primera hoja del Excel está vacía o no existe");
+                return;
+            }
 
-        // Procesar filas desde la fila 4 (index 3)
-        for (let i = 3; i < jsonData.length; i++) {
-            const row = jsonData[i];
-            if (!row || row.length < 4) continue; // ignorar filas incompletas
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false });
 
-            const [youtube, fangamesRaw, musicName, author] = row;
-            if (!youtube || !fangamesRaw || !musicName || !author) continue;
+            // Reiniciar gameData de forma segura
+            window.gameData = [];
 
-            const fangames = fangamesRaw.split(';').map(f => f.trim());
+            // Procesar filas a partir de la fila 4
+            for (let i = 3; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!Array.isArray(row)) continue;
 
-            gameData.push({
-                youtube,
-                fangames,
-                musicName,
-                author
-            });
+                const [index, youtube, fangamesRaw, musicName, author] = row;
+
+                // Validación más robusta
+                if (
+                    index == null ||
+                    !youtube ||
+                    !fangamesRaw ||
+                    !musicName ||
+                    !author
+                ) {
+                    continue;
+                }
+
+                const fangames = String(fangamesRaw).split(';').map(f => f.trim());
+
+                gameData.push({
+                    index,
+                    youtube,
+                    fangames,
+                    musicName,
+                    author
+                });
+            }
+
+            console.log("Excel cargado:", gameData);
+
+        } catch (err) {
+            console.error("Error leyendo el Excel:", err);
         }
+    };
 
-        console.log("Excel cargado:", gameData);
+    reader.onerror = (e) => {
+        console.error("Error leyendo el archivo:", e);
     };
 
     reader.readAsArrayBuffer(file);
 });
+
 
 
 //#endregion
@@ -364,6 +406,7 @@ function startOptionMode() {
     totalQuestions = configElements.roundsInput.value;
     currentQuestion = 1;
     score = 0;
+    usedQuestions.clear();
     showScreen('Screen_InGame');
     playSound('Select.wav');
     stopMusic();
@@ -382,8 +425,14 @@ function showOptionQuestion() {
     }
 
     // Elegir canción correcta
-    const correctIndex = Math.floor(Math.random() * gameData.length);
+    let correctIndex;
+    do {
+        correctIndex = Math.floor(Math.random() * gameData.length);
+    } while (usedQuestions.has(correctIndex) && !infiniteMode);
+
+    usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
+    reportIndex = correctIndex;
 
     startTimer();
     showQuestion();
@@ -428,10 +477,11 @@ function showOptionQuestion() {
 
 //#region Manual Mode
 function startManualMode() {
+    gameMode = "Manual";
     currentQuestion = 1;
     totalQuestions = configElements.roundsInput.value;
     score = 0;
-    gameMode = "Manual";
+    usedQuestions.clear();
     showScreen('Screen_InGame');
     playSound('Select.wav');
     stopMusic();
@@ -458,8 +508,14 @@ function showManualQuestion() {
     gameElements.manualSubmit.disabled = false;
 
     // Elegir canción correcta
-    const correctIndex = Math.floor(Math.random() * gameData.length);
+    let correctIndex;
+    do {
+        correctIndex = Math.floor(Math.random() * gameData.length);
+    } while (usedQuestions.has(correctIndex) && !infiniteMode);
+
+    usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
+    reportIndex = correctIndex;
 
     showQuestion(); // carga video y contador
     startTimer();   // inicia el temporizador
@@ -708,6 +764,57 @@ function getEmbedURL(youtubeURL) {
     // Construir URL para iframe
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
+
+//#region Report Button
+
+document.getElementById("btnReport").onclick = () => {
+    playSound('Select.wav');
+
+    if (gameElements.reportMenu.style.display == "block")
+        { gameElements.reportMenu.style.display = "none"; }
+    else
+        { gameElements.reportMenu.style.display = "block"; }
+};
+
+gameElements.reportSend.onclick = () => {
+    playSound('Select.wav');
+
+    const reason = gameElements.reportReason.value;
+    if (!currentMusic) {
+        alert("Error");
+        return;
+    }
+
+    const payload = {
+        embeds: [
+            {
+                title: "New Report",
+                color: 15158332,
+                fields: [
+                    { name: "CSV Index", value: String(reportIndex+4), inline: true },
+                    { name: "Link", value: currentMusic.youtube },
+                    { name: "Song Name", value: currentMusic.musicName },
+                    { name: "Fangames", value: currentMusic.fangames.join(", ") },
+                    { name: "Reason", value: reason },
+                    { name: "Date", value: new Date().toLocaleString() }
+                ]
+            }
+        ]
+    };
+
+    fetch(DISCORD_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        alert("Report submitted!");
+        gameElements.reportMenu.style.display = "none";
+    }).catch(err => {
+        console.error(err);
+        alert("Error sending the report.");
+    });
+};
+//#endregion
 
 //#endregion
 
