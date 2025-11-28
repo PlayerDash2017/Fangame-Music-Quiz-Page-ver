@@ -293,6 +293,11 @@ input[type="text"] {
     font-size: 14px;
 }
 
+#Report_AddFangame {
+    width: 91%;
+    font-size: 14px;
+}
+
 /* Botón de enviar dentro del menú */
 #Report_Send {
     margin-top: 10px;

@@ -64,9 +64,16 @@
                 <h3>Report Issue</h3>
 
                 <select id="Report_Reason">
-                    <option value="Private/Delete video">Private/Delete video</option>
-                    <option value="Incorrect Fangame/Song">Incorrect Fangame/Song</option>
+                    <option value="video">Private/Delete video</option>
+                    <option value="wrong">Incorrect fangame/song</option>
+                    <option value="addfangame">Add missing fangame</option>
                 </select>
+
+                <input 
+                    type="text" 
+                    id="Report_AddFangame" 
+                    placeholder="Fangame name"
+                    style="display:none; margin-top:10px;">
 
                 <button id="Report_Send">Submit</button>
             </div>

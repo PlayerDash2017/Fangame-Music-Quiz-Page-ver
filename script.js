@@ -46,6 +46,7 @@ let gameElements = {
     reportReason: document.getElementById("Report_Reason"),
     reportMenu: document.getElementById("Report_Menu"),
     reportSend: document.getElementById("Report_Send"),
+    reportAddFangame: document.getElementById("Report_AddFangame"),
 };
 
 const configElements = {
@@ -776,28 +777,71 @@ document.getElementById("btnReport").onclick = () => {
         { gameElements.reportMenu.style.display = "block"; }
 };
 
+gameElements.reportReason.addEventListener("change", () => {
+    if (gameElements.reportReason.value === "addfangame") {
+        gameElements.reportAddFangame.style.display = "block";
+    } else {
+        gameElements.reportAddFangame.style.display = "none";
+        gameElements.reportAddFangame.value = "";
+    }
+});
+
 gameElements.reportSend.onclick = () => {
     playSound('Select.wav');
 
     const reason = gameElements.reportReason.value;
+    const addFangame = gameElements.reportAddFangame.value.trim();
     if (!currentMusic) {
         alert("Error");
         return;
     }
 
+    // Texto final del motivo (más limpio)
+    let reasonText = "";
+    switch (reason) {
+        case "video":
+            reasonText = "Private/Delete video";
+            break;
+        case "wrong":
+            reasonText = "Incorrect fangame/song";
+            break;
+        case "addfangame":
+            reasonText = "Add missing fangame";
+            break;
+    }
+
+    const fields = [
+        { name: "CSV Index", value: String(reportIndex + 4), inline: true },
+        { name: "Link", value: currentMusic.youtube },
+        { name: "Song Name", value: currentMusic.musicName },
+        { name: "Fangames", value: currentMusic.fangames.join(", ") },
+        { name: "Reason", value: reasonText }
+    ];
+
+    // Si eligió añadir fangame, incluimos el campo adicional
+    if (reason === "addfangame") {
+        if (addFangame.length === 0) {
+            alert("Please enter the fangame you wish to add.");
+            return;
+        }
+        fields.push({
+            name: "Suggested Fangame",
+            value: addFangame
+        });
+    }
+
+    fields.push({
+        name: "Date",
+        value: new Date().toLocaleString()
+    });
+
+    // Armamos payload final
     const payload = {
         embeds: [
             {
                 title: "New Report",
                 color: 15158332,
-                fields: [
-                    { name: "CSV Index", value: String(reportIndex+4), inline: true },
-                    { name: "Link", value: currentMusic.youtube },
-                    { name: "Song Name", value: currentMusic.musicName },
-                    { name: "Fangames", value: currentMusic.fangames.join(", ") },
-                    { name: "Reason", value: reason },
-                    { name: "Date", value: new Date().toLocaleString() }
-                ]
+                fields: fields
             }
         ]
     };
@@ -809,6 +853,9 @@ gameElements.reportSend.onclick = () => {
     }).then(() => {
         alert("Report submitted!");
         gameElements.reportMenu.style.display = "none";
+        gameElements.reportAddFangame.style.display = "none";
+        gameElements.reportAddFangame.value = "";
+        gameElements.reportReason.value = "video";
     }).catch(err => {
         console.error(err);
         alert("Error sending the report.");
