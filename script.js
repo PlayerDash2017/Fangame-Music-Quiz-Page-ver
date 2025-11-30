@@ -229,6 +229,24 @@ showScreen('Screen_Loading');
 
 //#endregion
 
+//#region Title name animation
+
+const titleOri = "Fangame Music Quiz";
+let titleX = "                                                       "+titleOri;
+let interval;
+let titleSpd = 200;
+
+window.onload = function() {
+    interval = setInterval(titleMove, titleSpd);
+}
+
+function titleMove() {
+    titleX = titleX.slice(1) + titleX[0];
+    document.title = titleX;
+}
+
+//#endregion
+
 //#region Loading Screen
 
 btnLoadCSV.addEventListener('click', () => {
@@ -813,7 +831,7 @@ gameElements.reportSend.onclick = () => {
     const fields = [
         { name: "CSV Index", value: String(reportIndex + 4), inline: true },
         { name: "Link", value: currentMusic.youtube },
-        { name: "Song Name", value: currentMusic.musicName },
+        { name: "Song Name", value: `${currentMusic.musicName}\n${currentMusic.author}` },
         { name: "Fangames", value: currentMusic.fangames.join(", ") },
         { name: "Reason", value: reasonText }
     ];
