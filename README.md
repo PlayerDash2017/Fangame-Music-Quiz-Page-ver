@@ -2,7 +2,7 @@
 
 **Original Maker:** Kurath  
 **Page ver:** PlayerDash2017  
-**Tool:** Visual Studio Code  
+**Tools:** Visual Studio Code, Firebase  
 **Discord:** PlayerDash2017#4921  
 
 One of the many game modes in *The Farewell Medley* adapted to a web page format. 
@@ -14,7 +14,6 @@ Fangame Music Quiz is a mini-game in which you have to guess which fangame a son
 
 This version of the page differs from the original version in the following ways:
 - A new tab does not open; instead, the video is embedded within the page.
-- It does not have a ranked mode or leaderboard (too complex for my current level lol).
 - You can customize the rounds and time.
 - It allows you to display the name of the song if the video is not available.
 

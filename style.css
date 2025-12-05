@@ -57,12 +57,27 @@ button:hover {
     color: black;
 }
 
+/* Contenedor general */
+#Title_Menu {
+    text-align: center;   /* Centra todo dentro */
+    margin-top: 20px;
+}
+
+/* Bloque de botones en fila */
+#Title_Button {
+    margin-top: 15px;     /* Espacio entre imagen y botones */
+    display: flex;
+    justify-content: center; /* Centra los botones en fila */
+    gap: 10px;            /* Espacio entre botones */
+}
+
 /* Caja de opciones / respuestas */
 #Game_Option, 
 #Game_Manual, 
 #Game_Answer, 
 #Result_List, 
-#Config_Menu {
+#Config_Menu,
+#Ranked_Menu {
     border: 2px solid white;
     padding: 15px;
     margin: 20px auto;
@@ -316,6 +331,71 @@ input[type="text"] {
 
 .Report_Hidden {
     display: none;
+}
+
+/* Ranked Mode */
+
+#Ranked_Menu p,
+.Ranked_Label {
+    color: #00ffcc;
+    font-size: 16px;
+    text-shadow: 0 0 4px #00ff88;
+    margin: 10px 0 5px 0;
+}
+
+/* Input del nombre */
+#Ranked_PlayerName {
+    width: 60%;
+    margin: 5px auto 15px auto;
+    display: block;
+}
+
+/* Select del modo */
+#Ranked_LeaderboardMode {
+    width: 50%;
+    padding: 8px;
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+/* Tabla del leaderboard */
+#Ranked_LeaderboardTable {
+    width: 80%;
+    margin: 10px auto 20px auto;
+    border-collapse: collapse;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid white;
+}
+
+#Ranked_LeaderboardTable th {
+    padding: 10px;
+    background: rgba(0,255,170,0.2);
+    border-bottom: 2px solid white;
+    text-shadow: 0 0 4px #00ff88;
+}
+
+#Ranked_LeaderboardTable td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Countdown */
+#Ranked_Countdown {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #00ffcc;
+    text-shadow: 0 0 4px #00ff88;
+}
+
+#Ranked_Time {
+    font-weight: bold;
+    color: #6affa8;
+    text-shadow: 0 0 6px #00ffcc;
 }
 
 /* Fondo de partículas */

@@ -26,10 +26,15 @@
     </div>
 
     <div id="Screen_Title">
-        <img id="Title" src="./img/title.png" alt="title"/>
+        <div id="Title_Menu">
+            <img id="Title" src="./img/title.png" alt="title"/>
 
-        <button id="btnOptionMode" onclick="startOptionMode()">Option Mode</button>
-        <button id="btnManualMode" onclick="startManualMode()">Manual Mode</button>
+            <div id="Title_Button">
+                <button id="btnOptionMode" onclick="startOptionMode()">Option Mode</button>
+                <button id="btnManualMode" onclick="startManualMode()">Manual Mode</button>
+                <button id="btnRankedMode" onclick="activeRanked()">Ranked Mode</button>
+            </div>
+        </div>
 
         <div id="Config_Menu">
             <h3>Settings</h3>
@@ -52,6 +57,37 @@
             <p>Customize FMQ Excel</p>
             <button id="btnLoadExcel" onclick="">Upload file</button>
             <input type="file" id="excel-file" style="display:none;" onchange="" /> 
+        </div>
+
+        <div id="Ranked_Menu" style="display:none;">
+            <h3>Ranked Mode</h3>
+
+            <p>Enter your player name:</p>
+            <input type="text" id="Ranked_PlayerName" maxlength="20" value="Player" placeholder="Your Name">
+
+            <p class="Ranked_Label">Leaderboard Mode:</p>
+
+            <select id="Ranked_LeaderboardMode">
+                <option value="option">Option Mode</option>
+                <option value="manual">Manual Mode</option>
+            </select>
+
+            <table id="Ranked_LeaderboardTable" class="Ranked_LeaderboardTable">
+                <thead>
+                    <tr>
+                        <th>Top</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <h1 id="Ranked_Loading" style="display:none;">Loading...</h1>
+
+            <div id="Ranked_Countdown">
+                The leaderboards will be updated in: <span id="Ranked_Time"></span>
+            </div>
         </div>
     </div>
 
@@ -118,6 +154,9 @@
     <!-- Soporte de CSV y Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Firebase support -->
+    <script type="module" src="firebase.js"></script>
     <script src="script.js"></script>
 
     <!-- Particles -->

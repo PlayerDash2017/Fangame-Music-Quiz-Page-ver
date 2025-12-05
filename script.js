@@ -14,10 +14,14 @@ let currentQuestion = 0;
 let score = 0;
 let timer = null;
 let currentTime = timerValue; // tiempo actual en segundos
+let typeData = "";
 let gameData = []; // Aquí se guardarán las preguntas (del CSV o Excel)
 let currentMusic = null;
 let gameHistory = []; // Array para almacenar historial de preguntas
 let usedQuestions = new Set();
+let didFinish = false;
+let rankedMode = false;
+let playerName = "Player";
 let reportIndex = 0;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
 
@@ -47,6 +51,10 @@ let gameElements = {
     reportMenu: document.getElementById("Report_Menu"),
     reportSend: document.getElementById("Report_Send"),
     reportAddFangame: document.getElementById("Report_AddFangame"),
+    rankedName: document.getElementById("Ranked_PlayerName"),
+    rankedLeaderboard: document.getElementById("Ranked_LeaderboardMode"),
+    rankedTime: document.getElementById("Ranked_Time"),
+    rankedLoading: document.getElementById("Ranked_Loading"),
 };
 
 const configElements = {
@@ -238,6 +246,9 @@ let titleSpd = 200;
 
 window.onload = function() {
     interval = setInterval(titleMove, titleSpd);
+
+    const playerName = localStorage.getItem("playerName");
+    if (playerName) gameElements.rankedName.value = playerName;
 }
 
 function titleMove() {
@@ -250,6 +261,12 @@ function titleMove() {
 //#region Loading Screen
 
 btnLoadCSV.addEventListener('click', () => {
+    loadCSV();
+    playMusic();
+    showScreen('Screen_Title');
+});
+
+function loadCSV(){
     playSound('Select.wav');
     Papa.parse("FMQ.csv", {
         download: true,       // Descarga directa desde la ruta del proyecto
@@ -278,16 +295,13 @@ btnLoadCSV.addEventListener('click', () => {
             }
 
             console.log("CSV cargado correctamente:", gameData);
-            playMusic();
-
-            // Pasamos a la pantalla del título
-            showScreen('Screen_Title');
         },
         error: function(err) {
             alert("Error al cargar el CSV: " + err.message);
         }
     });
-});
+    typeData = "Original";
+}
 
 //#endregion
 
@@ -400,6 +414,7 @@ configElements.excelFileInput.addEventListener('change', (event) => {
             }
 
             console.log("Excel cargado:", gameData);
+            typeData = "Custom";
 
         } catch (err) {
             console.error("Error leyendo el Excel:", err);
@@ -413,21 +428,220 @@ configElements.excelFileInput.addEventListener('change', (event) => {
     reader.readAsArrayBuffer(file);
 });
 
+//#endregion
 
+//#region Ranked Mode
+function activeRanked(){
+    rankedMode = !rankedMode;
+    playSound('Select.wav');
+
+    if (rankedMode) {
+        document.getElementById("Config_Menu").style.display = "none";
+        document.getElementById("Ranked_Menu").style.display = "block";
+
+        const mode = gameElements.rankedLeaderboard.value;
+        leaderboardLoad();
+        leaderboardShow(`leaderboard_${mode}`);
+
+        totalQuestions = 20;
+        configElements.roundsInput.value = totalQuestions;
+
+        infiniteMode = false;
+        configElements.roundsInput.type = "number";
+        configElements.roundsInput.value = totalQuestions; // volver a valor por defecto
+        configElements.roundsInput.disabled = false;
+
+        timerValue = 50;
+        configElements.timerValue.textContent = timerValue;
+
+        showSongName = true;
+        configElements.musicNameBtn.textContent = `Show Song Name: ${showSongName ? "On" : "Off"}`;
+
+        if (typeData != "Original"){
+            loadCSV();
+        }
+
+        document.getElementById("btnRankedMode").textContent = "Single Mode";
+    } else {
+        document.getElementById("Config_Menu").style.display = "block";
+        document.getElementById("Ranked_Menu").style.display = "none";
+
+        document.getElementById("btnRankedMode").textContent = "Ranked Mode";
+    }
+}
+
+gameElements.rankedName.addEventListener("input", function() {
+    const saveName = this.value;
+    localStorage.setItem("playerName", saveName);
+});
+
+gameElements.rankedLeaderboard.addEventListener("change", function () {
+    const selectedValue = this.value;
+    leaderboardShow(`leaderboard_${selectedValue}`);
+});
+
+function rankedCountdown() {
+    const now = new Date();
+
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+
+    const diff = tomorrow - now;
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    gameElements.rankedTime.textContent =
+        `${hours}h ${minutes}m ${seconds}s`;
+}
+
+// Actualizar cada segundo
+setInterval(rankedCountdown, 1000);
+rankedCountdown();
+
+function leaderboardUpdate(){
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem("lastVisit");
+    const isDifferentDay = lastVisit !== today;
+
+    localStorage.setItem("lastVisit", today);
+
+    return isDifferentDay;
+}
+
+async function leaderboardSave(_mode, _name, _score) {
+    const {
+        db, collection, addDoc
+    } = window._firebase;
+
+    const collectionName =
+        _mode === "Option" ? "leaderboard_option" : "leaderboard_manual";
+
+    try {
+        await addDoc(collection(db, collectionName), {
+            name: _name,
+            score: _score,
+            timestamp: Date.now()
+        });
+
+        console.log("Score saved:", _name, _score);
+    } catch (err) {
+        console.error("Error saving score:", err);
+    }
+}
+
+async function leaderboardLoad() {
+    if (!leaderboardUpdate()){
+        return;
+    }
+
+    const {
+        db, collection, query, orderBy, limit, getDocs
+    } = window._firebase;
+
+    const collections = ["leaderboard_option", "leaderboard_manual"];
+
+    try {
+        // Ejecutar ambas consultas en paralelo
+        const queries = collections.map(name =>
+            getDocs(
+                query(
+                    collection(db, name),
+                    orderBy("score", "desc"),
+                    limit(20)
+                )
+            )
+        );
+
+        const snapshots = await Promise.all(queries);
+
+        // Convertir cada snapshot en array de datos
+        const results = {};
+        snapshots.forEach((snapshot, i) => {
+            const data = [];
+            snapshot.forEach(doc => data.push(doc.data()));
+            results[collections[i]] = data;
+        });
+
+        // Guardar en localStorage
+        localStorage.setItem("leaderboards", JSON.stringify(results));
+        return results;
+
+    } catch (err) {
+        console.error("Error loading leaderboards:", err);
+    }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function leaderboardShow(selected) {
+    gameElements.rankedLoading.style.display = "block";
+    document.getElementById("Ranked_LeaderboardTable").style.display = "none";
+
+    await sleep(1000);// 1 segundo
+    gameElements.rankedLoading.style.display = "none";
+    document.getElementById("Ranked_LeaderboardTable").style.display = "table";
+
+    // Recuperar todos los leaderboards guardados en localStorage
+    const stored = localStorage.getItem("leaderboards");
+    if (!stored) {
+        console.warn("No hay leaderboards en localStorage");
+        return;
+    }
+
+    const leaderboards = JSON.parse(stored);
+
+    // Verificar que el seleccionado exista
+    const data = leaderboards[selected];
+    if (!data) {
+        console.warn(`Leaderboard '${selected}' no encontrado`);
+        return;
+    }
+
+    // Renderizar en la tabla
+    const tbody = document.querySelector("#Ranked_LeaderboardTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach((entry, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${entry.name}</td>
+            <td>${entry.score}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
 
 //#endregion
 
 //#region InGame Screen
 
+
+
+
 //#region Option Mode
+
 function startOptionMode() {
+    playSound('Select.wav');
+
+    const playerName = gameElements.rankedName.value;
+    if (rankedMode && playerName == ""){
+        alert("Please enter a name.");
+        return;
+    }
+
     gameMode = "Option";
     totalQuestions = configElements.roundsInput.value;
     currentQuestion = 1;
     score = 0;
     usedQuestions.clear();
     showScreen('Screen_InGame');
-    playSound('Select.wav');
     stopMusic();
 
     // Mostrar la sección de Manual Mode y ocultar opciones
@@ -439,6 +653,7 @@ function startOptionMode() {
 
 function showOptionQuestion() {
     if (currentQuestion > totalQuestions && !infiniteMode) {
+        didFinish = true;
         showResults();
         return;
     }
@@ -496,13 +711,20 @@ function showOptionQuestion() {
 
 //#region Manual Mode
 function startManualMode() {
+    playSound('Select.wav');
+
+    const playerName = gameElements.rankedName.value;
+    if (rankedMode && playerName == ""){
+        alert("Please enter a name.");
+        return;
+    }
+
     gameMode = "Manual";
     currentQuestion = 1;
     totalQuestions = configElements.roundsInput.value;
     score = 0;
     usedQuestions.clear();
     showScreen('Screen_InGame');
-    playSound('Select.wav');
     stopMusic();
 
     // Mostrar la sección de Manual Mode y ocultar opciones
@@ -514,6 +736,7 @@ function startManualMode() {
 
 function showManualQuestion() {
     if (currentQuestion > totalQuestions && !infiniteMode) {
+        didFinish = true;
         showResults();
         return;
     }
@@ -764,6 +987,7 @@ function checkAnswer(selectedFangame) {
     const btnExit = document.getElementById('btnExit');
     btnExit.onclick = () => {
         playSound('Select.wav');
+        didFinish = false;
         showResults();
     };
 }
@@ -893,6 +1117,14 @@ function showResults() {
 
     gameElements.resultScore.textContent = `Your Score: ${score}`;
 
+    if (didFinish && rankedMode){
+        const _name = gameElements.rankedName.value;
+        const _mode = gameMode;
+        const _score = score;
+
+        leaderboardSave(_mode, _name, _score);
+    }
+
     const resultList = document.getElementById('Result_List');
     resultList.innerHTML = ""; // Limpiar lista antes de agregar
 
@@ -917,8 +1149,6 @@ function showResults() {
 
         resultList.appendChild(div);
     });
-
-    screen.result.scrollIntoView({ behavior: "instant", block: "start" });
 }
 
 const btnBackMenu = document.getElementById('btnBackMenu');
