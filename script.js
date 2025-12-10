@@ -6,7 +6,7 @@
 let totalQuestions = 20;
 let infiniteMode = false;
 let timerValue = 50;
-let showSongName = false;
+let showSongName = true;
 
 // --- Estados del juego ---
 let gameMode = "Option";
@@ -448,7 +448,7 @@ function activeRanked(){
 
         infiniteMode = false;
         configElements.roundsInput.type = "number";
-        configElements.roundsInput.value = totalQuestions; // volver a valor por defecto
+        configElements.roundsInput.value = totalQuestions;
         configElements.roundsInput.disabled = false;
 
         timerValue = 50;
@@ -496,7 +496,6 @@ function rankedCountdown() {
         `${hours}h ${minutes}m ${seconds}s`;
 }
 
-// Actualizar cada segundo
 setInterval(rankedCountdown, 1000);
 rankedCountdown();
 
@@ -608,10 +607,15 @@ async function leaderboardShow(selected) {
     data.forEach((entry, index) => {
         const tr = document.createElement("tr");
 
+        const timestamp = entry.timestamp;
+        const dateObj = new Date(timestamp);
+        const setDate = dateObj.toISOString().split('T')[0];
+
         tr.innerHTML = `
             <td>${index + 1}</td>
             <td>${entry.name}</td>
             <td>${entry.score}</td>
+            <td>${setDate}</td>
         `;
 
         tbody.appendChild(tr);
@@ -658,7 +662,7 @@ function showOptionQuestion() {
         return;
     }
 
-    // Elegir canción correcta
+    // Elege una canción correcta
     let correctIndex;
     do {
         correctIndex = Math.floor(Math.random() * gameData.length);
@@ -674,7 +678,7 @@ function showOptionQuestion() {
     const correctFangame = currentMusic.fangames[Math.floor(Math.random() * currentMusic.fangames.length)];
     const validFangamesSet = new Set(currentMusic.fangames.map(f => f.trim().toLowerCase()));
 
-    // Generar opciones (1 correcta + 4 incorrectas)
+    // Genera las opciones
     const options = [correctFangame];
 
     while (options.length < 5) {
@@ -682,7 +686,7 @@ function showOptionQuestion() {
         const randomMusic = gameData[randomIndex];
         const randomFangame = randomMusic.fangames[Math.floor(Math.random() * randomMusic.fangames.length)];
 
-        // Evitar duplicados y fangames de la misma canción
+        // Sistema para evitar duplicados
         if (
             !options.some(opt => opt.toLowerCase() === randomFangame.toLowerCase()) &&
             !validFangamesSet.has(randomFangame.toLowerCase())
@@ -691,7 +695,7 @@ function showOptionQuestion() {
         }
     }
 
-    // Mezclar y mostrar
+    // Shuffle
     options.sort(() => Math.random() - 0.5);
     gameElements.optionList.innerHTML = "";
 
