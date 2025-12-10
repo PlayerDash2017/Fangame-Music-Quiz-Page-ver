@@ -21,7 +21,6 @@ let gameHistory = []; // Array para almacenar historial de preguntas
 let usedQuestions = new Set();
 let didFinish = false;
 let rankedMode = false;
-let playerName = "Player";
 let reportIndex = 0;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
 
@@ -38,6 +37,7 @@ let gameElements = {
     timeText: document.getElementById('Game_Time'),
     videoFrame: document.getElementById('Video_iframe'),
     videoName: document.getElementById('Video_Name'),
+    videoOpen: document.getElementById('Video_Open'),
     optionGame: document.getElementById('Game_Option'),
     optionList: document.getElementById('GameOption_List'),
     manualGame: document.getElementById('Game_Manual'),
@@ -835,13 +835,15 @@ function submitManualAnswer() {
 }
 //#endregion
 
-function startTimer() {
+async function startTimer() {
     currentTime = timerValue; // reinicia el tiempo para cada pregunta
     gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
     let lastSecondPlayed = null;
 
     // Limpiar cualquier timer previo
     if (timer) clearInterval(timer);
+    await sleep(2000);
+    if (gameElements.answerSection.style.display == "block") return
 
     timer = setInterval(() => {
         currentTime -= 0.1; // bajar de a 0.1s
@@ -897,8 +899,6 @@ function checkAnswer(selectedFangame) {
     // Comprobamos si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
 
-    //const isCorrect = currentMusic.fangames.includes(selectedFangame);
-
     // Guardar en historial
     gameHistory.push({
         questionNumber: currentQuestion,
@@ -911,18 +911,17 @@ function checkAnswer(selectedFangame) {
     if (gameMode == "Option"){
         const allButtons = gameElements.optionList.querySelectorAll("button");
         allButtons.forEach(b => {
-            b.style.color = "gray"; // Poner gris a todos los botones
-            b.style.textShadow = "none"; // Quitar el text-shadow
+            b.style.color = "gray";
+            b.style.textShadow = "none";
             b.style.pointerEvents = 'none';
             b.style.border = "3px solid gray";
         });
 
-        // Buscar el botón que fue presionado (seleccionado)
         if (selectedFangame != ""){
             const selectedButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
             if (!isCorrect) {
-                selectedButton.style.color = "red"; // Opción incorrecta: rojo
-                selectedButton.style.textShadow = "0px 0px 5px #FF0000"; // Sombra roja
+                selectedButton.style.color = "red";
+                selectedButton.style.textShadow = "0px 0px 5px #FF0000";
             }
         }
         
@@ -931,8 +930,8 @@ function checkAnswer(selectedFangame) {
         currentMusic.fangames.forEach(correctFangame => {
             const correctButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === correctFangame.toLowerCase().trim());
             if (correctButton) {
-                correctButton.style.color = "lime"; // Opción correcta: verde
-                correctButton.style.textShadow = "0px 0px 5px #00FF00"; // Sombra verde
+                correctButton.style.color = "lime";
+                correctButton.style.textShadow = "0px 0px 5px #00FF00";
             }
         });
     }
@@ -945,21 +944,19 @@ function checkAnswer(selectedFangame) {
         gameElements.manualInput.style.color = isCorrect ? "lime" : "red";
         gameElements.manualInput.style.textShadow = isCorrect ?
                                                     "0px 0px 5px #00FF00" :
-                                                    "0px 0px 5px #FF0000"; // Sombra verde
+                                                    "0px 0px 5px #FF0000";
     }
 
-    // Mostrar div de respuesta
     gameElements.answerSection.style.display = "block";
     const answerText = document.getElementById('Answer_Text');
     const answerInfo = document.getElementById('Answer_Info');
 
-    // Cambiar el color y el text-shadow según si la respuesta es correcta o incorrecta
     if (isCorrect) {
-        answerText.style.color = "lime"; // color para respuestas correctas
-        answerText.style.textShadow = "0px 0px 5px #00FF00"; // text-shadow verde
+        answerText.style.color = "lime";
+        answerText.style.textShadow = "0px 0px 5px #00FF00";
     } else {
-        answerText.style.color = "red"; // color para respuestas incorrectas
-        answerText.style.textShadow = "0px 0px 5px #FF0000"; // text-shadow rojo
+        answerText.style.color = "red";
+        answerText.style.textShadow = "0px 0px 5px #FF0000";
     }
 
     answerText.textContent = `Your answer: ${selectedFangame} — ${isCorrect ? "Correct!" : "Wrong!"}`;
@@ -1012,6 +1009,10 @@ function getEmbedURL(youtubeURL) {
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
 
+gameElements.videoOpen.addEventListener("click", function() {
+    window.open(currentMusic.youtube,"_blank");
+});
+
 //#region Report Button
 
 document.getElementById("btnReport").onclick = () => {
@@ -1034,6 +1035,7 @@ gameElements.reportReason.addEventListener("change", () => {
 
 gameElements.reportSend.onclick = () => {
     playSound('Select.wav');
+    gameElements.reportSend.disabled = true;
 
     const reason = gameElements.reportReason.value;
     const addFangame = gameElements.reportAddFangame.value.trim();
@@ -1102,9 +1104,11 @@ gameElements.reportSend.onclick = () => {
         gameElements.reportAddFangame.style.display = "none";
         gameElements.reportAddFangame.value = "";
         gameElements.reportReason.value = "video";
+        gameElements.reportSend.disabled = false;
     }).catch(err => {
         console.error(err);
         alert("Error sending the report.");
+        gameElements.reportSend.disabled = false;
     });
 };
 //#endregion
