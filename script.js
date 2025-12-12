@@ -1044,17 +1044,17 @@ gameElements.reportSend.onclick = () => {
         return;
     }
 
-    // Texto final del motivo (más limpio)
+    // Texto final del motivo
     let reasonText = "";
     switch (reason) {
         case "video":
-            reasonText = "Private/Delete video";
+            reasonText = "📹 Private/Delete video";
             break;
         case "wrong":
-            reasonText = "Incorrect fangame/song";
+            reasonText = "❌ Incorrect fangame/song";
             break;
         case "addfangame":
-            reasonText = "Add missing fangame";
+            reasonText = "➕ Add missing fangame";
             break;
     }
 
