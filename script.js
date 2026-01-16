@@ -831,7 +831,7 @@ function submitManualAnswer() {
     // Limpiar sugerencias
     gameElements.manualSuggestions.innerHTML = "";
 
-    checkAnswer(answer); // reutilizamos la función de Option Mode
+    checkAnswer(answer);
 }
 //#endregion
 
@@ -861,7 +861,7 @@ async function startTimer() {
                 gameElements.manualSuggestions.innerHTML = "";
             }
 
-            // Tiempo agotado, registrar respuesta vacía
+            // Tiempo agotado
             checkAnswer(""); 
         } else {
             gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
@@ -875,8 +875,8 @@ async function startTimer() {
     }, 100); // cada 100ms
 }
 
-// --- Funciones comunes ---
 function showQuestion() {
+
     // Carga el video y actualiza contador de pregunta
     const videoUrl = getEmbedURL(currentMusic.youtube);
     gameElements.videoFrame.src = videoUrl;
@@ -890,6 +890,7 @@ function showQuestion() {
 }
 
 function checkAnswer(selectedFangame) {
+
     // Detener timer si aún está corriendo
     if (timer) {
         clearInterval(timer);
@@ -926,7 +927,7 @@ function checkAnswer(selectedFangame) {
         }
         
 
-        // Marcar la opción correcta en verde
+        // Mostrar opcion correcta
         currentMusic.fangames.forEach(correctFangame => {
             const correctButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === correctFangame.toLowerCase().trim());
             if (correctButton) {
@@ -966,10 +967,8 @@ function checkAnswer(selectedFangame) {
         <p><strong>Author:</strong> ${currentMusic.author}</p>
     `;
 
-    // Hacer scroll hacia el div de respuesta
+    // Scroll hacia el div de respuesta
     gameElements.answerSection.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    // Actualizar puntuación si es correcta
     if (isCorrect) score += 100 + Math.floor(currentTime * 2);
 
     // El botón Continue manejará la siguiente pregunta, sin recargar opciones ni video
@@ -1083,7 +1082,7 @@ gameElements.reportSend.onclick = () => {
         value: new Date().toLocaleString()
     });
 
-    // Armamos payload final
+    // Se hace el payload
     const payload = {
         embeds: [
             {
@@ -1122,6 +1121,7 @@ function showResults() {
     playMusic();
     document.getElementById("Video_iframe").src = "";
     gameElements.answerSection.style.display = "none";
+    gameElements.manualInput.innerHTML = "";
 
     gameElements.resultScore.textContent = `Your Score: ${score}`;
 

@@ -16,11 +16,11 @@ tsParticles.load("tsparticles", {
           value: 0.5
         },
         size: {
-          value: { min: 5, max: 15 } // Tamaño aleatorio
+          value: { min: 5, max: 15 } // Tamaño random
         },
         move: {
           enable: true,
-          speed: { min: 0.2, max: 1 }, // Velocidad lenta y aleatoria
+          speed: { min: 0.2, max: 1 }, // Velocidad lenta y random
           direction: "left",
           angle: {
             value: { min: 160, max: 200 } // Ángulo de movimiento en grados
@@ -32,7 +32,7 @@ tsParticles.load("tsparticles", {
           direction: "random",
           animation: {
             enable: true,
-            speed: { min: 2, max: 5 } // Velocidad de giro
+            speed: { min: 2, max: 5 } // Velocidad del giro
           }
         }
       },

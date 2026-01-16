@@ -11,7 +11,7 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Tu configuración real aquí ↓
+// Configuraciones de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAJISeVTXF1CrCkp4UmQTthqGuXH7Gez0o",
     authDomain: "fmq-ranked.firebaseapp.com",
