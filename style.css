@@ -171,8 +171,8 @@ input[type="text"] {
 }
 
 #Video_Open {
-    display: none;
-    margin: 10px auto 0 auto;
+    display: block;
+    margin: 1px auto;
 }
 
 /* Configuraciones */

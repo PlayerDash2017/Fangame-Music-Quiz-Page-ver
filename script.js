@@ -842,6 +842,7 @@ async function startTimer() {
 
     // Limpiar cualquier timer previo
     if (timer) clearInterval(timer);
+
     await sleep(2000);
     if (gameElements.answerSection.style.display == "block") return
 
@@ -977,6 +978,12 @@ function checkAnswer(selectedFangame) {
         gameElements.answerSection.style.display = "none";
         currentQuestion++;
         playSound('Select.wav');
+
+        // Detener timer si aún está corriendo
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
 
         if (gameMode == "Option")
             { showOptionQuestion(); }
