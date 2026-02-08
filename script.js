@@ -63,7 +63,7 @@ const configElements = {
     timerRange: document.getElementById('timerRange'),
     timerValue: document.getElementById('timerValue'),
     musicNameBtn: document.getElementById('musicNameBtn'),
-    excelFileInput: document.getElementById('excel-file'),
+    excelFileInput: document.getElementById("excelFileInput"),
     btnLoadExcel: document.getElementById('btnLoadExcel')
 };
 
@@ -213,7 +213,6 @@ rangeMusic.addEventListener('input', () => {
 //#endregion
 
 // --- Configuración cargada ---
-let customExcelData = null;
 
 function showScreen(screenId) {
     // Seleccionamos todos los elementos que tengan id que empiece con "Screen_"
@@ -310,6 +309,7 @@ function loadCSV(){
 configElements.roundsInput.addEventListener('input', () => {
     const roundRange = configElements.roundsInput;
     const min = parseInt(roundRange.min);
+    const max = gameData.length;
     const valor = parseInt(roundRange.value);
 
     if (isNaN(valor)){
@@ -318,6 +318,7 @@ configElements.roundsInput.addEventListener('input', () => {
     }
     
     if (valor < min) roundRange.value = min;
+    if (valor > max) roundRange.value = max;
     roundRange.value = Math.floor(roundRange.value);
 });
 
@@ -349,84 +350,68 @@ configElements.musicNameBtn.addEventListener('click', () => {
 });
 
 configElements.btnLoadExcel.addEventListener('click', () => {
-    if (!configElements.excelFileInput) {
-        console.error("excelFileInput no está definido");
-        return;
-    }
-
     configElements.excelFileInput.click();
     playSound('Select.wav');
 });
 
+
 configElements.excelFileInput.addEventListener('change', (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-        console.warn("No se seleccionó archivo");
-        return;
-    }
+    const file = event.target.files[0];
+    if (!file) return;
+
+    playSound('Select.wav');
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
-        try {
-            const data = new Uint8Array(e.target.result);
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
 
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        // Usamos la primera hoja
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
 
-            if (!firstSheet) {
-                console.error("La primera hoja del Excel está vacía o no existe");
-                return;
-            }
+        // Convertimos a array de arrays (igual que PapaParse)
+        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false });
+        gameData = [];
 
-            // Reiniciar gameData de forma segura
-            window.gameData = [];
+        // Empezar desde la fila 4 (índice 3)
+        for (let i = 3; i < rawData.length; i++) {
+            const row = rawData[i];
 
-            // Procesar filas a partir de la fila 4
-            for (let i = 3; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                if (!Array.isArray(row)) continue;
+            if (!row || !row[0] || !row[1] || !row[2] || !row[3]) continue;
 
-                const [index, youtube, fangamesRaw, musicName, author] = row;
+            const fangamesArray = row[1]
+                .toString()
+                .split(';')
+                .map(f => f.trim());
 
-                // Validación más robusta
-                if (
-                    index == null ||
-                    !youtube ||
-                    !fangamesRaw ||
-                    !musicName ||
-                    !author
-                ) {
-                    continue;
-                }
-
-                const fangames = String(fangamesRaw).split(';').map(f => f.trim());
-
-                gameData.push({
-                    index,
-                    youtube,
-                    fangames,
-                    musicName,
-                    author
-                });
-            }
-
-            console.log("Excel cargado:", gameData);
-            typeData = "Custom";
-
-        } catch (err) {
-            console.error("Error leyendo el Excel:", err);
+            gameData.push({
+                index: i - 3,
+                youtube: row[0].toString().trim(),
+                fangames: fangamesArray,
+                musicName: row[2].toString().trim(),
+                author: row[3].toString().trim()
+            });
         }
+
+        console.log("Excel cargado correctamente:", gameData);
+        if (gameData.length < 20)
+            { configElements.roundsInput.value = gameData.length; }
+
+        typeData = "Custom";
+        playMusic();
+        showScreen('Screen_Title');
     };
 
-    reader.onerror = (e) => {
-        console.error("Error leyendo el archivo:", e);
+    reader.onerror = () => {
+        alert("Error al leer el archivo Excel");
     };
 
     reader.readAsArrayBuffer(file);
 });
+
 
 //#endregion
 

@@ -55,10 +55,11 @@
 
             <!-- Cargar un Excel custom -->
             <p>Customize FMQ Excel</p>
-            <button id="btnLoadExcel" onclick="">Upload file (Not Working, Whoops)</button>
-            <input type="file" id="excel-file" style="display:none;" onchange="" /> 
+            <button id="btnLoadExcel" onclick="">Upload File</button>
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none">
         </div>
 
+        <!-- Ranked Mode -->
         <div id="Ranked_Menu" style="display:none;">
             <h3>Ranked Mode</h3>
 
@@ -154,7 +155,7 @@
     </div>
 
     <!-- Soporte de CSV y Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <!-- Firebase support -->
