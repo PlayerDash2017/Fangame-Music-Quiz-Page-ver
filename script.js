@@ -185,7 +185,7 @@ soundUI.rangeSound.addEventListener('input', () => {
 
 // -- Musica --
 const musMenu = new Audio('snd/Menu.mp3');
-musMenu.loop = true; // Activar el loop
+musMenu.loop = true;
 
 // Valor inicial del volumen
 let musicVolume = parseInt(rangeMusic.value) / 100;
@@ -199,7 +199,7 @@ function playMusic() {
 
 function stopMusic() {
     musMenu.pause();
-    musMenu.currentTime = 0; // Reiniciar desde el principio si la quieres volver a tocar luego
+    musMenu.currentTime = 0;
 }
 
 // Evento para ajustar volumen con el slider
@@ -218,7 +218,6 @@ function showScreen(screenId) {
     // Seleccionamos todos los elementos que tengan id que empiece con "Screen_"
     const screens = document.querySelectorAll('[id^="Screen_"]');
 
-    // Ocultamos todas
     screens.forEach(screen => {
         screen.style.display = "none";
     });
