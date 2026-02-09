@@ -17,7 +17,6 @@ This version of the page differs from the original version in the following ways
 - You can customize the rounds and time.
 - It allows you to display the name of the song if the video is not available.
 
-
 ---
 
 # Enjoy :)
