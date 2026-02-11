@@ -415,6 +415,7 @@ configElements.excelFileInput.addEventListener('change', (event) => {
 //#endregion
 
 //#region Ranked Mode
+
 function activeRanked(){
     rankedMode = !rankedMode;
     playSound('Select.wav');
@@ -825,15 +826,16 @@ async function startTimer() {
     let lastSecondPlayed = null;
 
     // Limpiar cualquier timer previo
-    if (timer) clearInterval(timer);
+    stopTimer();
 
     await sleep(2000);
     if (gameElements.answerSection.style.display == "block") return
 
+    stopTimer();//Bugfix
     timer = setInterval(() => {
         currentTime -= 0.1; // bajar de a 0.1s
         if (currentTime <= 0) {
-            clearInterval(timer);
+            stopTimer();
             gameElements.timeText.textContent = `Time: 0.0`;
 
             if (gameMode == "Option"){
@@ -860,6 +862,10 @@ async function startTimer() {
     }, 100); // cada 100ms
 }
 
+function stopTimer(){
+    if (timer) clearInterval(timer);
+}
+
 function showQuestion() {
 
     // Carga el video y actualiza contador de pregunta
@@ -875,12 +881,7 @@ function showQuestion() {
 }
 
 function checkAnswer(selectedFangame) {
-
-    // Detener timer si aún está corriendo
-    if (timer) {
-        clearInterval(timer);
-        timer = null;
-    }
+    stopTimer();
     
     // Comprobamos si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
@@ -962,12 +963,7 @@ function checkAnswer(selectedFangame) {
         gameElements.answerSection.style.display = "none";
         currentQuestion++;
         playSound('Select.wav');
-
-        // Detener timer si aún está corriendo
-        if (timer) {
-            clearInterval(timer);
-            timer = null;
-        }
+        stopTimer();
 
         if (gameMode == "Option")
             { showOptionQuestion(); }
