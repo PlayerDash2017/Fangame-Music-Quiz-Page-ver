@@ -759,10 +759,11 @@ function showManualQuestion() {
 }
 
 gameElements.manualInput.addEventListener('input', () => {
-    const input = gameElements.manualInput.value.toLowerCase();
+    const input = gameElements.manualInput.value.toLowerCase().trim();
     const suggestions = [];
+    const seen = new Set();
 
-    if (input == ""){
+    if (input === "") {
         gameElements.manualSuggestions.innerHTML = "";
         return;
     }
@@ -770,7 +771,13 @@ gameElements.manualInput.addEventListener('input', () => {
     // Buscar hasta 8 coincidencias
     gameData.forEach(song => {
         song.fangames.forEach(f => {
-            if (f.toLowerCase().includes(input) && !suggestions.includes(f)) {
+            const normalized = f.toLowerCase();
+
+            if (
+                normalized.includes(input) &&
+                !seen.has(normalized)
+            ) {
+                seen.add(normalized);
                 suggestions.push(f);
             }
         });
@@ -785,14 +792,17 @@ gameElements.manualInput.addEventListener('input', () => {
         const div = document.createElement('div');
         div.textContent = s;
         div.classList.add("suggestion-item");
+
         div.addEventListener('click', () => {
-            gameElements.manualInput.value = s; // poner la sugerencia en el input
-            gameElements.manualInput.focus();         // volver a foco
-            gameElements.manualSuggestions.innerHTML = ""; // limpiar sugerencias
+            gameElements.manualInput.value = s;
+            gameElements.manualInput.focus();
+            gameElements.manualSuggestions.innerHTML = "";
         });
+
         gameElements.manualSuggestions.appendChild(div);
     });
 });
+
 
 // Botón Submit
 gameElements.manualSubmit.addEventListener('click', () => {
