@@ -23,6 +23,7 @@ let didFinish = false;
 let rankedMode = false;
 let reportIndex = 0;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
+const debugMode = false;
 
 // --- Elementos del DOM ---
 let screens = {
@@ -150,7 +151,7 @@ function loadSounds() {
         sounds[file] = audio;
     });
 
-    console.log("Sonidos cargados:", Object.keys(sounds));
+    console.log("Sounds load:", Object.keys(sounds));
 }
 
 function playSound(name) {
@@ -231,6 +232,10 @@ function showScreen(screenId) {
     }
 }
 
+function print(text){
+    if (debugMode) console.log(text);
+}
+
 showScreen('Screen_Loading');
 
 //#endregion
@@ -279,7 +284,7 @@ function loadCSV(){
                 const row = rawData[i];
 
                 // Ignorar filas con columnas vacías
-                if (!row[0] || !row[1] || !row[2] || !row[3]) continue;
+                if (!row[0] || !row[1] || !row[2] || !row[3] || row[4].trim() == "Down") continue;
 
                 const fangamesArray = row[1].split(';').map(f => f.trim());
 
@@ -292,7 +297,8 @@ function loadCSV(){
                 });
             }
 
-            console.log("CSV cargado correctamente:", gameData);
+            if (debugMode)
+                { console.log("CSV cargado correctamente:", gameData); }
         },
         error: function(err) {
             alert("Error al cargar el CSV: " + err.message);
