@@ -998,7 +998,8 @@ function checkAnswer(selectedFangame) {
 // Función para convertir un link normal de YouTube a embed
 function getEmbedURL(youtubeURL) {
     // Extraer ID del video
-    const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
+    // const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
+    const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/|shorts\/)([^&\?]+)/);
     const videoId = idMatch ? idMatch[1] : null;
 
     if (!videoId) return youtubeURL; // fallback
