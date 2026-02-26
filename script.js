@@ -13,11 +13,11 @@ let gameMode = "Option";
 let currentQuestion = 0;
 let score = 0;
 let timer = null;
-let currentTime = timerValue; // tiempo actual en segundos
+let currentTime = timerValue;
 let typeData = "";
-let gameData = []; // Aquí se guardarán las preguntas (del CSV o Excel)
+let gameData = [];
 let currentMusic = null;
-let gameHistory = []; // Array para almacenar historial de preguntas
+let gameHistory = [];
 let usedQuestions = new Set();
 let didFinish = false;
 let rankedMode = false;
@@ -36,11 +36,17 @@ let screens = {
 let gameElements = {
     questionText: document.getElementById('Game_Question'),
     timeText: document.getElementById('Game_Time'),
+
+    // Video
     videoFrame: document.getElementById('Video_iframe'),
     videoName: document.getElementById('Video_Name'),
     videoOpen: document.getElementById('Video_Open'),
+
+    // Option
     optionGame: document.getElementById('Game_Option'),
     optionList: document.getElementById('GameOption_List'),
+    
+    // Manual
     manualGame: document.getElementById('Game_Manual'),
     manualInput: document.getElementById('GameManual_Answer'),
     manualList: document.getElementById('GameManual_List'),
@@ -48,10 +54,14 @@ let gameElements = {
     manualSubmit: document.getElementById('GameManual_Submit'),
     answerSection: document.getElementById('Game_Answer'),
     resultScore: document.getElementById('Result_Score'),
+    
+    // Report
     reportReason: document.getElementById("Report_Reason"),
     reportMenu: document.getElementById("Report_Menu"),
     reportSend: document.getElementById("Report_Send"),
     reportAddFangame: document.getElementById("Report_AddFangame"),
+    
+    // Ranked
     rankedName: document.getElementById("Ranked_PlayerName"),
     rankedLeaderboard: document.getElementById("Ranked_LeaderboardMode"),
     rankedTime: document.getElementById("Ranked_Time"),
@@ -91,7 +101,6 @@ window.addEventListener('DOMContentLoaded', () => {
         rangeMusic.value = savedMusicVolume;
     }
 
-    // Aplicar los valores cargados
     const userSoundVolume = parseInt(soundUI.rangeSound.value) / 100;
     Object.values(sounds).forEach(audio => {
         const baseVolume = parseFloat(audio.dataset.baseVolume);
@@ -103,7 +112,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Función auxiliar para mostrar solo un slider
+// Toggle del slide de los sonidos
 function toggleSlider(type) {
     if (type === 'music') {
         if (soundUI.musicSettings.style.display == 'none') {
@@ -146,8 +155,8 @@ function loadSounds() {
 
     soundFiles.forEach(({ file, baseVolume }) => {
         const audio = new Audio(`snd/${file}`);
-        audio.volume = baseVolume * (parseInt(soundUI.rangeSound.value) / 100); // volumen inicial ajustado al control
-        audio.dataset.baseVolume = baseVolume; // guardamos el volumen base
+        audio.volume = baseVolume * (parseInt(soundUI.rangeSound.value) / 100);
+        audio.dataset.baseVolume = baseVolume;
         sounds[file] = audio;
     });
 
@@ -162,11 +171,7 @@ function playSound(name) {
 
     // Clonar el audio para permitir reproducir múltiples veces
     const soundClone = sounds[name].cloneNode();
-
-    // Tomar el volumen base del dataset
     const baseVolume = parseFloat(sounds[name].dataset.baseVolume) || 1.0;
-
-    // Ajustar según el slider de usuario
     soundClone.volume = baseVolume * (parseInt(rangeSound.value) / 100);
 
     soundClone.play();
@@ -216,14 +221,12 @@ rangeMusic.addEventListener('input', () => {
 // --- Configuración cargada ---
 
 function showScreen(screenId) {
-    // Seleccionamos todos los elementos que tengan id que empiece con "Screen_"
     const screens = document.querySelectorAll('[id^="Screen_"]');
 
     screens.forEach(screen => {
         screen.style.display = "none";
     });
 
-    // Mostramos solo la deseada
     const screenToShow = document.getElementById(screenId);
     if (screenToShow) {
         screenToShow.style.display = "block";
@@ -841,7 +844,6 @@ async function startTimer() {
     gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
     let lastSecondPlayed = null;
 
-    // Limpiar cualquier timer previo
     stopTimer();
 
     await sleep(2000);
@@ -864,7 +866,6 @@ async function startTimer() {
                 gameElements.manualSuggestions.innerHTML = "";
             }
 
-            // Tiempo agotado
             checkAnswer(""); 
         } else {
             gameElements.timeText.textContent = `Time: ${currentTime.toFixed(1)}`;
@@ -875,10 +876,11 @@ async function startTimer() {
                 lastSecondPlayed = wholeSecond;
             }
         }
-    }, 100); // cada 100ms
+    }, 100); // 100ms
 }
 
 function stopTimer(){
+    // Limpiar cualquier timer existente
     if (timer) clearInterval(timer);
 }
 
@@ -899,10 +901,10 @@ function showQuestion() {
 function checkAnswer(selectedFangame) {
     stopTimer();
     
-    // Comprobamos si el nombre del fangame seleccionado coincide con alguno de los correctos
+    // Revisa si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
 
-    // Guardar en historial
+    // historial
     gameHistory.push({
         questionNumber: currentQuestion,
         musicName: currentMusic.musicName,
@@ -920,6 +922,7 @@ function checkAnswer(selectedFangame) {
             b.style.border = "3px solid gray";
         });
 
+        // Incorrect option
         if (selectedFangame != ""){
             const selectedButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
             if (!isCorrect) {
@@ -928,8 +931,7 @@ function checkAnswer(selectedFangame) {
             }
         }
         
-
-        // Mostrar opcion correcta
+        // Correct option
         currentMusic.fangames.forEach(correctFangame => {
             const correctButton = Array.from(allButtons).find(b => b.textContent.toLowerCase().trim() === correctFangame.toLowerCase().trim());
             if (correctButton) {
@@ -973,7 +975,6 @@ function checkAnswer(selectedFangame) {
     gameElements.answerSection.scrollIntoView({ behavior: "smooth", block: "start" });
     if (isCorrect) score += 100 + Math.floor(currentTime * 2);
 
-    // El botón Continue manejará la siguiente pregunta, sin recargar opciones ni video
     const btnContinue = document.getElementById('btnContinue');
     btnContinue.onclick = () => {
         gameElements.answerSection.style.display = "none";
@@ -998,7 +999,6 @@ function checkAnswer(selectedFangame) {
 // Función para convertir un link normal de YouTube a embed
 function getEmbedURL(youtubeURL) {
     // Extraer ID del video
-    // const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
     const idMatch = youtubeURL.match(/(?:v=|youtu\.be\/|shorts\/)([^&\?]+)/);
     const videoId = idMatch ? idMatch[1] : null;
 
@@ -1008,7 +1008,6 @@ function getEmbedURL(youtubeURL) {
     const tMatch = youtubeURL.match(/[?&]t=(\d+)s?/);
     const startTime = tMatch ? parseInt(tMatch[1]) : 0;
 
-    // Construir URL para iframe
     return `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
 }
 
@@ -1121,7 +1120,8 @@ gameElements.reportSend.onclick = () => {
 //#region Result Screen
 
 function showResults() {
-    showScreen('Screen_Result'); // Mostrar la pantalla de resultados
+    showScreen('Screen_Result');
+
     playMusic();
     document.getElementById("Video_iframe").src = "";
     gameElements.answerSection.style.display = "none";
@@ -1129,6 +1129,7 @@ function showResults() {
 
     gameElements.resultScore.textContent = `Your Score: ${score}`;
 
+    // Ranked mode
     if (didFinish && rankedMode){
         const _name = gameElements.rankedName.value;
         const _mode = gameMode;
@@ -1165,7 +1166,7 @@ function showResults() {
 
 const btnBackMenu = document.getElementById('btnBackMenu');
 btnBackMenu.onclick = () => {
-    gameHistory = []; // Limpiar historial
+    gameHistory = [];
     score = 0;
     currentQuestion = 1;
     playSound('Select.wav');

@@ -38,7 +38,6 @@ h2, h3 {
     display: block;
 }
 
-/* Botones estilo arcade */
 button {
     font-family: 'Courier New', monospace;
     font-size: 18px;
@@ -91,20 +90,19 @@ button:hover {
 
 /* Contenedor de sugerencias */
 
-/* Cada item de sugerencia */
+/* Los items de sugerencia */
 .suggestion-item {
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 
-/* Hover sobre item */
+/* Hover del item */
 .suggestion-item:hover {
     background-color: rgba(255,255,255,0.2);
     color: black;
 }
 
-/* Ajuste input manual para que se vea más integrado */
 #Game_Manual input[type="text"] {
     position: relative;
     width: 100%;
@@ -264,7 +262,6 @@ input[type="text"] {
     text-align: left;
 }
 
-/* Botón principal: mismo estilo que tus botones arcade */
 #btnReport {
     font-family: 'Courier New', monospace;
     font-size: 16px;
@@ -277,7 +274,6 @@ input[type="text"] {
     transition: all 0.2s ease-in-out;
 }
 
-/* Hover igual que tus botones */
 #btnReport:hover {
     background-color: white;
     color: black;
@@ -301,7 +297,6 @@ input[type="text"] {
     text-shadow: 0px 0px 5px #00ff88;
 }
 
-/* Select adaptado al estilo arcade */
 #Report_Reason {
     width: 100%;
     padding: 6px;
@@ -317,7 +312,6 @@ input[type="text"] {
     font-size: 14px;
 }
 
-/* Botón de enviar dentro del menú */
 #Report_Send {
     margin-top: 10px;
     width: 90%;
