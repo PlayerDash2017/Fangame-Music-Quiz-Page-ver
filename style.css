@@ -222,7 +222,7 @@ input[type="text"] {
     text-shadow: 0 0 6px #00ff88;
 }
 
-#infiniteRoundsBtn, #musicNameBtn, #btnLoadExcel {
+#infiniteRoundsBtn, #musicNameBtn, #btnLoadExcel, #showVideoBtn {
     width: 70%;
     max-width: 250px;
     margin: 15px auto 5px auto; /* top right bottom left */

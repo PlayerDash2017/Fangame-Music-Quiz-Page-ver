@@ -7,6 +7,7 @@ let totalQuestions = 20;
 let infiniteMode = false;
 let timerValue = 50;
 let showSongName = true;
+let showVideo = true;
 
 // --- Estados del juego ---
 let gameMode = "Option";
@@ -74,6 +75,7 @@ const configElements = {
     timerRange: document.getElementById('timerRange'),
     timerValue: document.getElementById('timerValue'),
     musicNameBtn: document.getElementById('musicNameBtn'),
+    showVideoBtn: document.getElementById('showVideoBtn'),
     excelFileInput: document.getElementById("excelFileInput"),
     btnLoadExcel: document.getElementById('btnLoadExcel')
 };
@@ -357,6 +359,12 @@ configElements.musicNameBtn.addEventListener('click', () => {
     playSound('Select.wav');
 });
 
+configElements.showVideoBtn.addEventListener('click', () => {
+    showVideo = !showVideo;
+    configElements.showVideoBtn.textContent = `Show Video: ${showVideo ? "On" : "Off"}`;
+    playSound('Select.wav');
+});
+
 configElements.btnLoadExcel.addEventListener('click', () => {
     configElements.excelFileInput.click();
     playSound('Select.wav');
@@ -450,6 +458,9 @@ function activeRanked(){
 
         showSongName = true;
         configElements.musicNameBtn.textContent = `Show Song Name: ${showSongName ? "On" : "Off"}`;
+
+        showVideo = true;
+        configElements.showVideoBtn.textContent = `Show Song Name: ${showVideo ? "On" : "Off"}`;
 
         if (typeData != "Original"){
             loadCSV();
@@ -890,6 +901,8 @@ function showQuestion() {
     const videoUrl = getEmbedURL(currentMusic.youtube);
     gameElements.videoFrame.src = videoUrl;
     gameElements.videoName.textContent = showSongName ? currentMusic.musicName : "";
+    gameElements.videoFrame.style.display = showVideo ? "inline-block" : "none";
+    gameElements.videoOpen.style.display = showVideo ? "block" : "none";
 
     if (!infiniteMode) {
         gameElements.questionText.textContent = `Question ${currentQuestion} - ${totalQuestions}`;
@@ -900,6 +913,8 @@ function showQuestion() {
 
 function checkAnswer(selectedFangame) {
     stopTimer();
+    gameElements.videoFrame.style.display = "inline-block";
+    gameElements.videoOpen.style.display = "block";
     
     // Revisa si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
