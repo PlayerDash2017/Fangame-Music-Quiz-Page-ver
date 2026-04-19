@@ -191,7 +191,7 @@ soundUI.rangeSound.addEventListener('input', () => {
     localStorage.setItem('soundVolume', soundUI.rangeSound.value);
 });
 
-// -- Musica --
+// Musica
 const musMenu = new Audio('snd/Menu.mp3');
 musMenu.loop = true;
 
@@ -675,7 +675,7 @@ function showOptionQuestion() {
 
     usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
-    reportIndex = correctIndex;
+    reportIndex = currentMusic.index;
 
     startTimer();
     showQuestion();
@@ -766,7 +766,7 @@ function showManualQuestion() {
 
     usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
-    reportIndex = correctIndex;
+    reportIndex = currentMusic.index;
 
     showQuestion(); // carga video y contador
     startTimer();   // inicia el temporizador
