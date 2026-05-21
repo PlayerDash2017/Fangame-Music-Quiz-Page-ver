@@ -23,6 +23,8 @@ let usedQuestions = new Set();
 let didFinish = false;
 let rankedMode = false;
 let reportIndex = 0;
+let countStreak = 0;
+let bestStreak = 0;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
 const debugMode = false;
 
@@ -649,6 +651,8 @@ function startOptionMode() {
     totalQuestions = configElements.roundsInput.value;
     currentQuestion = 1;
     score = 0;
+    countStreak = 0;
+    bestStreak = 0;
     usedQuestions.clear();
     showScreen('Screen_InGame');
     stopMusic();
@@ -732,6 +736,8 @@ function startManualMode() {
     currentQuestion = 1;
     totalQuestions = configElements.roundsInput.value;
     score = 0;
+    countStreak = 0;
+    bestStreak = 0;
     usedQuestions.clear();
     showScreen('Screen_InGame');
     stopMusic();
@@ -919,7 +925,7 @@ function checkAnswer(selectedFangame) {
     // Revisa si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
 
-    // historial
+    // Historial
     gameHistory.push({
         questionNumber: currentQuestion,
         musicName: currentMusic.musicName,
@@ -927,6 +933,13 @@ function checkAnswer(selectedFangame) {
         isCorrect: isCorrect,
         correctFangames: [...currentMusic.fangames]
     });
+
+    // Best streak
+    countStreak *= isCorrect;
+    if (isCorrect){
+        countStreak ++;
+        if (countStreak > bestStreak) bestStreak = countStreak;
+    }
 
     if (gameMode == "Option"){
         const allButtons = gameElements.optionList.querySelectorAll("button");
@@ -1161,7 +1174,8 @@ function showResults() {
 
     const summary = document.createElement("div");
     summary.innerHTML = `<h3 style="color: lime; text-shadow: 2px 2px 5px rgba(144, 255, 144, 0.57);">Correct: ${correctCount} / ${gameHistory.length}</h3>
-                        <h3 style="color: red; text-shadow: 2px 2px 5px rgba(255, 144, 144, 0.57);">Incorrect: ${incorrectCount} / ${gameHistory.length}</h3>`;
+                        <h3 style="color: red; text-shadow: 2px 2px 5px rgba(255, 144, 144, 0.57);">Incorrect: ${incorrectCount} / ${gameHistory.length}</h3>
+                        <h3 style="color: white; text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.57);">Best Streak: ${bestStreak}</h3>`;
     resultList.appendChild(summary);
 
     gameHistory.forEach(item => {
