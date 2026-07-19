@@ -8,6 +8,7 @@ let infiniteMode = false;
 let timerValue = 50;
 let showSongName = true;
 let showVideo = true;
+let showNSFW = true;
 
 // --- Estados del juego ---
 let gameMode = "Option";
@@ -78,6 +79,7 @@ const configElements = {
     timerValue: document.getElementById('timerValue'),
     musicNameBtn: document.getElementById('musicNameBtn'),
     showVideoBtn: document.getElementById('showVideoBtn'),
+    showNSFWBtn: document.getElementById('showNSFWBtn'),
     excelFileInput: document.getElementById("excelFileInput"),
     btnLoadExcel: document.getElementById('btnLoadExcel')
 };
@@ -300,7 +302,8 @@ function loadCSV(){
                     youtube: row[0].trim(),
                     fangames: fangamesArray,
                     musicName: row[2].trim(),
-                    author: row[3].trim()
+                    author: row[3].trim(),
+                    state: row[4].trim()
                 });
             }
 
@@ -367,6 +370,12 @@ configElements.showVideoBtn.addEventListener('click', () => {
     playSound('Select.wav');
 });
 
+configElements.showNSFWBtn.addEventListener('click', () => {
+    showNSFW = !showNSFW;
+    configElements.showNSFWBtn.textContent = `NSFW: ${showNSFW ? "On" : "Off"}`;
+    playSound('Select.wav');
+});
+
 configElements.btnLoadExcel.addEventListener('click', () => {
     configElements.excelFileInput.click();
     playSound('Select.wav');
@@ -410,7 +419,8 @@ configElements.excelFileInput.addEventListener('change', (event) => {
                 youtube: row[0].toString().trim(),
                 fangames: fangamesArray,
                 musicName: row[2].toString().trim(),
-                author: row[3].toString().trim()
+                author: row[3].toString().trim(),
+                state: row[4].toString().trim()
             });
         }
 
@@ -463,6 +473,9 @@ function activeRanked(){
 
         showVideo = true;
         configElements.showVideoBtn.textContent = `Show Song Name: ${showVideo ? "On" : "Off"}`;
+
+        showNSFW = true;
+        configElements.showNSFWBtn.textContent = `NSFW: ${showNSFW ? "On" : "Off"}`;
 
         if (typeData != "Original"){
             loadCSV();
@@ -675,7 +688,7 @@ function showOptionQuestion() {
     let correctIndex;
     do {
         correctIndex = Math.floor(Math.random() * gameData.length);
-    } while (usedQuestions.has(correctIndex) && !infiniteMode);
+    } while ((usedQuestions.has(correctIndex) && !infiniteMode) || (!showNSFW && gameData[correctIndex].state == "NSFW"));
 
     usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
@@ -768,7 +781,7 @@ function showManualQuestion() {
     let correctIndex;
     do {
         correctIndex = Math.floor(Math.random() * gameData.length);
-    } while (usedQuestions.has(correctIndex) && !infiniteMode);
+    } while ((usedQuestions.has(correctIndex) && !infiniteMode) || (!showNSFW && gameData[correctIndex].state == "NSFW"));
 
     usedQuestions.add(correctIndex);
     currentMusic = gameData[correctIndex];
@@ -925,7 +938,7 @@ function checkAnswer(selectedFangame) {
     // Revisa si el nombre del fangame seleccionado coincide con alguno de los correctos
     const isCorrect = currentMusic.fangames.some(fg => fg.toLowerCase().trim() === selectedFangame.toLowerCase().trim());
 
-    // Historial
+    // History
     gameHistory.push({
         questionNumber: currentQuestion,
         musicName: currentMusic.musicName,
