@@ -472,7 +472,7 @@ function activeRanked(){
         configElements.musicNameBtn.textContent = `Show Song Name: ${showSongName ? "On" : "Off"}`;
 
         showVideo = true;
-        configElements.showVideoBtn.textContent = `Show Song Name: ${showVideo ? "On" : "Off"}`;
+        configElements.showVideoBtn.textContent = `Show Video: ${showVideo ? "On" : "Off"}`;
 
         showNSFW = true;
         configElements.showNSFWBtn.textContent = `NSFW: ${showNSFW ? "On" : "Off"}`;
