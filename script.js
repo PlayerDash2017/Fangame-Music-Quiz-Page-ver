@@ -27,6 +27,7 @@ let reportIndex = 0;
 let countStreak = 0;
 let bestStreak = 0;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1443734653310599174/KeHIyMRXaijvdAmfOmJeCcXYJm1SigMpjNtVfJrlRDj9tu-KtVEfx9hWNsLKLjI0G2Lm";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTMMPAfA4lTiQ9N_BTbfCzRex0J7wLvmna-nkE_ZSH0Y21MECkG-ig1R2wppPyXOA/pub?gid=1208860801&single=true&output=csv";
 const debugMode = false;
 
 // --- Elementos del DOM ---
@@ -280,7 +281,7 @@ btnLoadCSV.addEventListener('click', () => {
 
 function loadCSV(){
     playSound('Select.wav');
-    Papa.parse("FMQ.csv", {
+    Papa.parse(CSV_URL, {
         download: true,       // Descarga directa desde la ruta del proyecto
         header: false,        // No necesitamos encabezados, empezamos desde fila 4
         skipEmptyLines: true, // Ignora filas vacías
